@@ -5,6 +5,6 @@ Team name: The Distributed Platoon
 
 Team members:
 - Hazhir Amiri
-- Mohammad Rizwawn
+- Mohammad Rizwan
 - Hermann Anguiga
 - Zayd Shabban
