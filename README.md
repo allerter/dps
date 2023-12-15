@@ -7,4 +7,4 @@ Team members:
 - Hazhir Amiri
 - Mohammad Rizwan
 - Hermann Anguiga
-- Zayd Shabban
+
