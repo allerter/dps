@@ -8,6 +8,7 @@
 
 #include <string>
 #include "GPSLocation.h"
+#include "CollisionSensor.h"
 
 class Truck
 {
@@ -19,13 +20,16 @@ private:
     GPSLocation location;
     CollisionSensor collisionSensor;
 
+protected:
+    std::string state;
 public:
 
     Truck(int id, std::string &direction, float speed, GPSLocation &destination,
           GPSLocation &location);
 
     ~Truck();
-
+    void operator()();
+    void stop();
     [[nodiscard]] int getId() const;
 
     void setDirection(const std::string &direction);
@@ -45,8 +49,8 @@ public:
     [[nodiscard]] GPSLocation getDestination() const;
 
     void changeSpeed(float newSpeed);
-    void changeDirection(std::string newDirection);
-    void changeDestination(GPSLocation newDestination);
+    void changeDirection(std::string &newDirection);
+    void changeDestination(GPSLocation &newDestination);
 
 };
 

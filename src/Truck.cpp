@@ -4,6 +4,8 @@
 
 #include "Truck.h"
 
+#include <utility>
+
 Truck::~Truck() = default;
 
 int Truck::getId() const {
@@ -34,7 +36,7 @@ void Truck::setLocation(const GPSLocation &newLocation) {
 Truck::Truck(int id, std::string &direction, float speed, GPSLocation &destination,
              GPSLocation &location) : id(id), direction(direction), speed(speed), destination(destination),
                                             location(location) {
-    this->collisionSensor = new CollisionSensor();
+    this->collisionSensor = *new CollisionSensor();
 }
 
 std::string Truck::getDirection() const {
@@ -47,4 +49,24 @@ float Truck::getSpeed() const {
 
 GPSLocation Truck::getDestination() const {
     return destination;
+}
+
+void Truck::changeSpeed(float newSpeed) {
+    this->speed = newSpeed;
+}
+
+void Truck::changeDestination(GPSLocation &newDestination) {
+    this->destination = newDestination;
+}
+
+void Truck::changeDirection(std::string &newDirection) {
+    Truck::direction = newDirection;
+}
+
+void Truck::stop() {
+    printf("stopping");
+    setDirection("right");
+    setSpeed(10);
+    setDirection("straight");
+    setSpeed(0);
 }

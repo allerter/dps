@@ -3,3 +3,8 @@
 //
 
 #include "Platoon.h"
+
+
+Platoon::Platoon(const Leader &leader, const PrimeFollower &primeFollower, const std::vector<Follower> &followers){
+
+}

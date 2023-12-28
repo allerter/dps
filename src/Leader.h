@@ -1,22 +1,36 @@
 #ifndef LEADER_H
 #define LEADER_H
 
- // #include "Platoon.h"
+#include <vector>
 #include "Message.h"
-//#include "PlatoonTruck.h"
 #include "Foreigner.h"
+// #include "Platoon.h"
+#include "PlatoonTruck.h"
+#include "Truck.h"
 
-class Leader {
+class Leader : private PlatoonTruck {
 private:
-    //Platoon* platoon;
-
+    // Platoon platoon;
+    std::vector<Truck> trucks;
 public:
-   // Leader(Platoon* platoon);
+    Leader(int id, std::string &direction, float speed, GPSLocation &destination, GPSLocation &location,
+           std::vector<Truck>& trucks1);
+    ~Leader();
+// Leader(Platoon* platoon);
     void broadcast(const Message& message);
    // void removeFollower(PlatoonTruck* truck);
     void addFollower(Foreigner* truck);
     void startPlatoon();
     void discover();
+
+    // [[nodiscard]] const Platoon &getPlatoon() const;
+
+    // void setPlatoon(const Platoon &platoon);
+
+    void removeFollower(PlatoonTruck *truck);
+
+    void operator()();
+
 };
 
 #endif 

@@ -1,14 +1,16 @@
 #ifndef PRIMEFOLLOWER_H
 #define PRIMEFOLLOWER_H
 
-#include "Platoon.h"
+
+#include <bits/unique_ptr.h>
+// #include "Platoon.h"
 
 class PrimeFollower {
 private:
-    Platoon* platoon;
+    // std::unique_ptr<Platoon> platoon;
 
 public:
-    PrimeFollower(Platoon* platoon);
+    explicit PrimeFollower();
     void replaceLeader();
 };
 

@@ -7,9 +7,15 @@
 
 
 #include "Truck.h"
+#include "Message.h"
 
-class PlatoonTruck: private Truck {
+class PlatoonTruck: public Truck {
+private:
+    std::string state;
 public:
+
+    PlatoonTruck(int id, std::string &direction, float speed, GPSLocation &destination, GPSLocation &location);
+
     void sendMessageToLeader(Message m);
     void processReceivedMessage(Message m);
     void disconnect();

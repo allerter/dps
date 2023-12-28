@@ -5,11 +5,19 @@
 #ifndef DPS_PLATOON_H
 #define DPS_PLATOON_H
 
+class Leader;
+class PrimeFollower;
+
+#include "Leader.h"
+#include "PrimeFollower.h"
+#include "Follower.h"
 
 class Platoon {
-    Leader leader{};
-    PrimeFollower primeFollower{};
-    Follower[2]{} followers;
+    std::unique_ptr<Leader> leader;
+    std::unique_ptr<PrimeFollower> primeFollower;
+    std::vector<std::unique_ptr<Follower>> followers;
+public:
+    Platoon(const Leader &leader, const PrimeFollower &primeFollower, const std::vector<Follower> &followers);
 };
 
 

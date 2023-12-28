@@ -13,4 +13,10 @@ add_executable(dps src/main.cpp
         src/CollisionSensor.cpp
         src/CollisionSensor.h
         src/Platoon.cpp
-        src/Platoon.h)
+        src/Platoon.h
+        src/Leader.h
+        src/Foreigner.cpp
+        src/Follower.cpp
+        src/Leader.cpp
+        src/Message.cpp
+        src/PrimeFollower.cpp)

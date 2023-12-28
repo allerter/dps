@@ -11,7 +11,7 @@ private:
     std::unordered_map<std::string, std::string> body;
 
 public:
-    Message(int id, const std::string& type, const std::unordered_map<std::string, std::string>& body);
+    Message(int id, std::string  type, const std::unordered_map<std::string, std::string>& body);
     int getId() const;
     std::string getType() const;
     std::unordered_map<std::string, std::string> getBody() const;
