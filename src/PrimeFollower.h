@@ -3,14 +3,17 @@
 
 
 #include <bits/unique_ptr.h>
+#include "PlatoonTruck.h"
 // #include "Platoon.h"
 
-class PrimeFollower {
+class PrimeFollower : public PlatoonTruck {
 private:
     // std::unique_ptr<Platoon> platoon;
 
 public:
-    explicit PrimeFollower();
+    PrimeFollower(int id, const std::string &direction, float speed, GPSLocation &destination, GPSLocation &location);
+
+    void operator()();
     void replaceLeader();
 };
 

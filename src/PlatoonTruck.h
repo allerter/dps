@@ -10,15 +10,16 @@
 #include "Message.h"
 
 class PlatoonTruck: public Truck {
-private:
+protected:
     std::string state;
 public:
 
-    PlatoonTruck(int id, std::string &direction, float speed, GPSLocation &destination, GPSLocation &location);
+    PlatoonTruck(int id, std::string direction, float speed, GPSLocation &destination, GPSLocation &location);
 
     void sendMessageToLeader(Message m);
     void processReceivedMessage(Message m);
     void disconnect();
+    void operator()();
 };
 
 

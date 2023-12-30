@@ -4,5 +4,10 @@
 
 #include "PlatoonTruck.h"
 
-PlatoonTruck::PlatoonTruck(int id, std::string &direction, float speed, GPSLocation &destination, GPSLocation &location)
-        : Truck(id, direction, speed, destination, location) {}
+#include <utility>
+
+PlatoonTruck::PlatoonTruck(int id, std::string direction, float speed, GPSLocation &destination, GPSLocation &location)
+        : Truck(id, std::move(direction), speed, destination, location) {}
+
+void PlatoonTruck::operator()() {
+}

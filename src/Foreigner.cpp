@@ -2,14 +2,12 @@
 #include <iostream>
 #include <chrono>
 #include <thread>
+#include <utility>
 
 void Foreigner::discoverPlatoon() {
     // Implementation for discovering the platoon
     std::cout << "Foreigner discovering platoon" << std::endl;
 }
-
-Foreigner::Foreigner(int id, std::string &direction, float speed, GPSLocation &destination, GPSLocation &location)
-        : Truck(id, direction, speed, destination, location) {}
 
 void Foreigner::operator()() {
     int waitingTime = 5;
@@ -23,5 +21,11 @@ void Foreigner::operator()() {
             printf("searching for platoon...");
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        timeSinceLastWait++;
     }
+}
+
+Foreigner::Foreigner(int id, std::string direction, float speed, GPSLocation &destination, GPSLocation &location)
+        : Truck(id, std::move(direction), speed, destination, location) {
+
 }

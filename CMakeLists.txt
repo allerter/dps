@@ -19,4 +19,6 @@ add_executable(dps src/main.cpp
         src/Follower.cpp
         src/Leader.cpp
         src/Message.cpp
-        src/PrimeFollower.cpp)
+        src/PrimeFollower.cpp
+        src/utils.cpp
+        src/utils.h)

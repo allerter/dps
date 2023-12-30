@@ -14,6 +14,13 @@ class Truck
 {
 private:
     const int id;
+    int messageCounter{0};
+public:
+    int getMessageCounter() const;
+
+    void setMessageCounter(int messageCounter);
+
+private:
     std::string direction;
     float speed;
     GPSLocation destination;
@@ -24,11 +31,12 @@ protected:
     std::string state;
 public:
 
-    Truck(int id, std::string &direction, float speed, GPSLocation &destination,
-          GPSLocation &location);
+    Truck(int id, std::string  direction, float speed, GPSLocation& destination,
+          GPSLocation& location);
 
     ~Truck();
-    void operator()();
+
+    virtual void operator()();
     void stop();
     [[nodiscard]] int getId() const;
 
@@ -52,6 +60,7 @@ public:
     void changeDirection(std::string &newDirection);
     void changeDestination(GPSLocation &newDestination);
 
+    int incrementAndGetMessageCounter();
 };
 
 #endif //DPS_TRUCK_H

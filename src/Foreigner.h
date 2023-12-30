@@ -5,7 +5,7 @@
 
 class Foreigner : public Truck {
 public:
-    Foreigner(int id, std::string &direction, float speed, GPSLocation &destination, GPSLocation &location);
+    Foreigner(int id, std::string direction, float speed, GPSLocation &destination, GPSLocation &location);
 
     void discoverPlatoon();
     void operator()();

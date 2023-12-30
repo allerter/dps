@@ -11,10 +11,9 @@
 class Leader : private PlatoonTruck {
 private:
     // Platoon platoon;
-    std::vector<Truck> trucks;
+    std::vector<Foreigner> trucks;
 public:
-    Leader(int id, std::string &direction, float speed, GPSLocation &destination, GPSLocation &location,
-           std::vector<Truck>& trucks1);
+    Leader(int id, std::string direction, float speed, GPSLocation &destination, GPSLocation &location, std::vector<Foreigner>& trucks);
     ~Leader();
 // Leader(Platoon* platoon);
     void broadcast(const Message& message);

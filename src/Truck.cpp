@@ -33,8 +33,8 @@ void Truck::setLocation(const GPSLocation &newLocation) {
     Truck::location = newLocation;
 }
 
-Truck::Truck(int id, std::string &direction, float speed, GPSLocation &destination,
-             GPSLocation &location) : id(id), direction(direction), speed(speed), destination(destination),
+Truck::Truck(int id, std::string direction, float speed, GPSLocation &destination,
+             GPSLocation &location) : id(id), direction(std::move(direction)), speed(speed), destination(destination),
                                             location(location) {
     this->collisionSensor = *new CollisionSensor();
 }
@@ -69,4 +69,20 @@ void Truck::stop() {
     setSpeed(10);
     setDirection("straight");
     setSpeed(0);
+}
+
+void Truck::operator()() {
+
+}
+
+int Truck::getMessageCounter() const {
+    return messageCounter;
+}
+
+void Truck::setMessageCounter(int messageCounter1) {
+    Truck::messageCounter = messageCounter1;
+}
+
+int Truck::incrementAndGetMessageCounter() {
+    return ++Truck::messageCounter;
 }
