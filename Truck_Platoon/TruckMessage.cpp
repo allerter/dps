@@ -1,0 +1,1 @@
+#include "TruckMessage.h"
