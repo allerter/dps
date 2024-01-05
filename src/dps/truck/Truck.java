@@ -21,12 +21,10 @@ public class Truck extends Thread {
     GPSLocation location;
     CollisionSensor collisionSensor;
 
-    private String ipAddress;
-    private int port;
+    private SocketAddress socketAddress;
     private TruckServer server;
 
-    public Truck(int id, String direction, float speed, GPSLocation destination, GPSLocation location, String ipAddress,
-            int port) throws IOException {
+    public Truck(int id, String direction, float speed, GPSLocation destination, GPSLocation location, SocketAddress socketAddress) throws IOException {
         this.logger = Logger.getLogger(this.getClass().getSimpleName());
         // TODO: add that at the log message
         // text is formatted like this: Truck # - {log_message}
@@ -36,10 +34,9 @@ public class Truck extends Thread {
         this.speed = speed;
         this.destination = destination;
         this.location = location;
-        this.ipAddress = ipAddress;
-        this.port = port;
+        this.socketAddress = socketAddress;
 
-        this.server = new TruckServer(port, this);
+        this.server = new TruckServer(socketAddress, this);
         new Thread(server).start();
     }
 
@@ -95,17 +92,13 @@ public class Truck extends Thread {
         this.speed = speed;
     }
 
-    public String getIpAddress() {
-        return ipAddress;
+    public SocketAddress getSocketAddress() {
+        return socketAddress;
     }
 
-    public int getPort() {
-        return port;
-    }
-
-    public void sendMessageTo(Message message, String receiverIp, int receiverPort) {
+    public void sendMessageTo(Message message, SocketAddress socketAddress) {
         try {
-            TruckClient.sendMessage(receiverIp, receiverPort, message);
+            TruckClient.sendMessage(socketAddress, message);
         } catch (IOException e) {
             this.logger.severe("Error sending message: " + e.getMessage());
         }

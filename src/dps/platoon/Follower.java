@@ -4,14 +4,15 @@ import java.io.IOException;
 
 import dps.GPSLocation;
 import dps.Message;
+import dps.truck.SocketAddress;
 import dps.truck.Truck;
 
 public class Follower extends Truck {
 
     Leader leader;
 
-    public Follower(int id, String direction, float speed, GPSLocation destination, GPSLocation location, Leader leader, String ipAddress, int port) throws IOException {
-        super(id, direction, speed, destination, location, ipAddress, port);
+    public Follower(int id, String direction, float speed, GPSLocation destination, GPSLocation location, Leader leader, SocketAddress socketAddress) throws IOException {
+        super(id, direction, speed, destination, location, socketAddress);
         this.leader = leader;
     }
 
