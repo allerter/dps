@@ -1,14 +1,16 @@
 package dps.platoon;
 
+import java.io.IOException;
+
 import dps.GPSLocation;
-import dps.Truck;
+import dps.truck.Truck;
 
 public class PrimeFollower extends Truck implements PlatoonTruck {
 
     private Platoon platoon; 
 
-    public PrimeFollower(int id, String direction, float speed, GPSLocation destination, GPSLocation location, Platoon platoon) {
-        super(id, direction, speed, destination, location);
+    public PrimeFollower(int id, String direction, float speed, GPSLocation destination, GPSLocation location, String ipAddress, int port, Platoon platoon) throws IOException {
+        super(id, direction, speed, destination, location, ipAddress, port);
         this.platoon = platoon;
     }
 

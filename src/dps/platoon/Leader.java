@@ -1,12 +1,11 @@
 package dps.platoon;
 
+import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 
 import dps.GPSLocation;
 import dps.Message;
-import dps.Truck;
+import dps.truck.Truck;
 import dps.Utils;
 
 public class Leader extends Truck implements PlatoonTruck{
@@ -14,8 +13,8 @@ public class Leader extends Truck implements PlatoonTruck{
     private Platoon platoon;
     private Truck[] trucks;
 
-    public Leader(int id, String direction, float speed, GPSLocation destination, GPSLocation location, Truck[] otherTrucks) {
-        super(id, direction, speed, destination, location);
+    public Leader(int id, String direction, float speed, GPSLocation destination, GPSLocation location, String ipAddress, int port, Truck[] otherTrucks) throws IOException {
+        super(id, direction, speed, destination, location, ipAddress, port);
         this.trucks = otherTrucks;
     }
 
@@ -27,8 +26,20 @@ public class Leader extends Truck implements PlatoonTruck{
         this.platoon = platoon;
     }
 
-    public void broadcast(Message message){
-        throw new UnsupportedOperationException("Unimplemented method");
+    public void broadcast(){
+        for (Truck truck : trucks) {
+            this.logger.finer("Sending message to " + truck.getIpAddress() + ":" + truck.getPort());
+            Message message = new Message(
+                incrementAndGetMessageCounter(),
+                Utils.now(),
+                "discovery",
+                "truck_id",
+                Integer.toString(this.getTruckId()),
+                "address",
+                this.getIpAddress() + ":" + this.getPort()
+            );
+            this.sendMessageTo(message, truck.getIpAddress(), truck.getPort());
+        }
     }
     
     public void removeFollower(Truck truck){
@@ -62,18 +73,19 @@ public class Leader extends Truck implements PlatoonTruck{
             processReceivedMessages();
             switch (truckState) {
                 case "discovery":
+                    // Wait 5 seconds for other trucks to join
                     if (waitForJoin == 5 && joinedTrucks.size() != 3) {
                         logger.info("Discovery unsuccessful. Trucked joined: " + joinedTrucks.size());
+                        truckState = "roaming";
+                    // All trucks join. Start the journey
                     } else if (joinedTrucks.size() == 3) {
                         logger.info("Discovery successful. Starting journey...");
                         truckState = "journey";
-                    }
-                    Map<String, String> messageBody = new HashMap<String, String>();
-                    messageBody.put("utc", Utils.now());
-                    messageBody.put("truck_id", Integer.toString(this.getTruckId()));
-                    messageBody.put("address", "localhost:port");
-                    Message message = new Message(incrementAndGetMessageCounter(), "discovery", messageBody);
-                    broadcast(message);
+                    } else {
+                        this.logger.info("Sending discovery message...");
+                        // Send discovery message to all trucks
+                        broadcast();
+                    }                    
                     waitForJoin++;
                     break;            
                 default:
