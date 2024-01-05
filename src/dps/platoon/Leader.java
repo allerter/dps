@@ -5,17 +5,18 @@ import java.util.ArrayList;
 
 import dps.GPSLocation;
 import dps.Message;
+import dps.truck.SocketAddress;
 import dps.truck.Truck;
 import dps.Utils;
 
 public class Leader extends Truck implements PlatoonTruck{
 
     private Platoon platoon;
-    private Truck[] trucks;
+    private SocketAddress[] trucksAddresses;
 
-    public Leader(int id, String direction, float speed, GPSLocation destination, GPSLocation location, String ipAddress, int port, Truck[] otherTrucks) throws IOException {
-        super(id, direction, speed, destination, location, ipAddress, port);
-        this.trucks = otherTrucks;
+    public Leader(int id, String direction, float speed, GPSLocation destination, GPSLocation location, SocketAddress socketAddress, SocketAddress[] otherTrucks) throws IOException {
+        super(id, direction, speed, destination, location, socketAddress);
+        this.trucksAddresses = otherTrucks;
     }
 
     public Platoon getPlatoon() {
@@ -27,8 +28,8 @@ public class Leader extends Truck implements PlatoonTruck{
     }
 
     public void broadcast(){
-        for (Truck truck : trucks) {
-            this.logger.finer("Sending message to " + truck.getIpAddress() + ":" + truck.getPort());
+        for (SocketAddress truckAddress : trucksAddresses) {
+            this.logger.finer("Sending message to " + truckAddress.toString());
             Message message = new Message(
                 incrementAndGetMessageCounter(),
                 Utils.now(),
@@ -36,9 +37,9 @@ public class Leader extends Truck implements PlatoonTruck{
                 "truck_id",
                 Integer.toString(this.getTruckId()),
                 "address",
-                this.getIpAddress() + ":" + this.getPort()
+                this.getSocketAddress().toString()
             );
-            this.sendMessageTo(message, truck.getIpAddress(), truck.getPort());
+            this.sendMessageTo(message, truckAddress);
         }
     }
     
