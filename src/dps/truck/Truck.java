@@ -19,8 +19,6 @@ public class Truck extends Thread {
     GPSLocation location;
     CollisionSensor collisionSensor;
 
-    private SocketAddress socketAddress;
-    private TruckServer server;
 
     public Truck(int id, String direction, float speed, GPSLocation destination, GPSLocation location, SocketAddress socketAddress) throws IOException {
         this.logger = Logger.getLogger(this.getClass().getSimpleName());
@@ -32,10 +30,8 @@ public class Truck extends Thread {
         this.speed = speed;
         this.destination = destination;
         this.location = location;
-        this.socketAddress = socketAddress;
+        this.server = server;
 
-        this.server = new TruckServer(socketAddress, this);
-        new Thread(server).start();
     }
 
     public int getTruckId() {
@@ -88,10 +84,6 @@ public class Truck extends Thread {
 
     public void setSpeed(double speed) {
         this.speed = speed;
-    }
-
-    public SocketAddress getSocketAddress() {
-        return socketAddress;
     }
 
     public void sendMessageTo(Message message, SocketAddress socketAddress) {

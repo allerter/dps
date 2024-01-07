@@ -11,14 +11,22 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import dps.Message;
 
-public class TruckServer implements Runnable {
+public class TruckServer extends Thread {
     private SocketAddress socketAddress;
     private Truck truck;
     LinkedBlockingQueue<Message> messageQueue = new LinkedBlockingQueue<>();
 
-    public TruckServer(SocketAddress socketAddress, Truck truck) throws IOException {
+    public TruckServer(SocketAddress socketAddress) throws IOException {
         this.socketAddress = socketAddress;
+    }
+
+    public void setTruck(Truck truck) {
         this.truck = truck;
+        truck.start();
+    }
+
+    public Truck getTruck() {
+        return truck;
     }
 
     @Override
