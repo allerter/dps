@@ -1,7 +1,6 @@
 package dps.truck;
 
 import java.io.IOException;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
@@ -13,7 +12,6 @@ public class Truck extends Thread {
     int truckId;
     protected String truckState;
     protected Logger logger;
-    LinkedBlockingQueue<Message> messageQueue = new LinkedBlockingQueue<>();
     AtomicInteger messageCounter = new AtomicInteger(0);
     String direction;
     double speed;
@@ -106,7 +104,7 @@ public class Truck extends Thread {
 
     public void processReceivedMessages() {
         while (true) {
-            Message message = this.messageQueue.poll();
+            Message message = this.server.getMessageQueue().poll();
             if (message == null) {
                 return;
             } else {
@@ -128,8 +126,6 @@ public class Truck extends Thread {
         }
     }
 
-    public void addMessageToQueue(Message message) {
-        this.messageQueue.add(message);
     }
 
 }

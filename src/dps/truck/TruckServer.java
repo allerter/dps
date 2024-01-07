@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
@@ -13,6 +14,7 @@ import dps.Message;
 public class TruckServer implements Runnable {
     private SocketAddress socketAddress;
     private Truck truck;
+    LinkedBlockingQueue<Message> messageQueue = new LinkedBlockingQueue<>();
 
     public TruckServer(SocketAddress socketAddress, Truck truck) throws IOException {
         this.socketAddress = socketAddress;
@@ -26,7 +28,7 @@ public class TruckServer implements Runnable {
                 try (Socket clientSocket = serverSocket.accept();
                         BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()))) {
                     String receivedMessage = in.readLine();
-                    truck.addMessageToQueue(Message.fromJson(receivedMessage));
+                    this.addMessageToQueue(Message.fromJson(receivedMessage));
                 
                 } catch (JsonProcessingException e) {
                     System.out.println(e.getStackTrace().toString());
@@ -37,5 +39,11 @@ public class TruckServer implements Runnable {
         } catch (IOException e) {
             System.err.println("Error starting server on port " + this.socketAddress.toString() + ": " + e.getMessage());
         }
+    public void addMessageToQueue(Message message) {
+        this.messageQueue.add(message);
+    }
+    public LinkedBlockingQueue<Message> getMessageQueue() {
+        return messageQueue;
+    }
     }
 }
