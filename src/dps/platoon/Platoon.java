@@ -37,6 +37,10 @@ public class Platoon {
     public void setFollower2(PlatoonTruckInfo follower2) {
         this.follower2 = follower2;
     }
+
+    public static Platoon fromJson(String string) {
+        throw new UnsupportedOperationException("Unimplemented method");
+    }
     
 }
 
