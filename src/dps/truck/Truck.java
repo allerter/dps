@@ -1,19 +1,22 @@
 package dps.truck;
 
 import java.io.IOException;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.Arrays;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import dps.CollisionSensor;
 import dps.GPSLocation;
 import dps.Message;
+import dps.Utils;
+import dps.platoon.Platoon;
 
 public class Truck extends Thread {
     int truckId;
     protected String truckState;
     protected Logger logger;
-    LinkedBlockingQueue<Message> messageQueue = new LinkedBlockingQueue<>();
     AtomicInteger messageCounter = new AtomicInteger(0);
     String direction;
     double speed;
@@ -21,10 +24,9 @@ public class Truck extends Thread {
     GPSLocation location;
     CollisionSensor collisionSensor;
 
-    private SocketAddress socketAddress;
-    private TruckServer server;
+    protected TruckServer server;
 
-    public Truck(int id, String direction, float speed, GPSLocation destination, GPSLocation location, SocketAddress socketAddress) throws IOException {
+    public Truck(int id, String direction, double speed, GPSLocation destination, GPSLocation location, TruckServer server) throws IOException {
         this.logger = Logger.getLogger(this.getClass().getSimpleName());
         // TODO: add that at the log message
         // text is formatted like this: Truck # - {log_message}
@@ -34,10 +36,8 @@ public class Truck extends Thread {
         this.speed = speed;
         this.destination = destination;
         this.location = location;
-        this.socketAddress = socketAddress;
+        this.server = server;
 
-        this.server = new TruckServer(socketAddress, this);
-        new Thread(server).start();
     }
 
     public int getTruckId() {
@@ -92,10 +92,6 @@ public class Truck extends Thread {
         this.speed = speed;
     }
 
-    public SocketAddress getSocketAddress() {
-        return socketAddress;
-    }
-
     public void sendMessageTo(Message message, SocketAddress socketAddress) {
         try {
             TruckClient.sendMessage(socketAddress, message);
@@ -106,18 +102,92 @@ public class Truck extends Thread {
 
     public void processReceivedMessages() {
         while (true) {
-            Message message = this.messageQueue.poll();
+            Message message = this.server.getMessageQueue().poll();
             if (message == null) {
                 return;
             } else {
                 this.logger.info("New message available: " + message.toString());
+                String messageType = message.getType();
+                Map<String, String> messageBody = message.getBody();
+                SocketAddress leaderAddress = SocketAddress.fromString(messageBody.get("address"));
+                switch (messageType) {
+                    case "discovery":
+                        this.logger.info("Received invitation from Truck " + messageBody.get("truck_id") + ". Joining.");
+                        Message joinMessage = new Message(
+                            this.incrementAndGetMessageCounter(),
+                            Utils.now(),
+                            "join",
+                            "truck_id",
+                            Integer.toString(this.getTruckId()),
+                            "location",
+                            this.getLocation().toString(),
+                            "address",
+                            this.server.getSocketAddress().toString());
+                        this.sendMessageTo(joinMessage, leaderAddress);
+                        truckState = "wait_for_role";
+                        break;
+                    case "new_role":
+                        String newRole = messageBody.get("role"); 
+                        if (newRole == "follower" || newRole == "prime_follower"){
+                            Message acknowledgeRoleMessage = new Message(
+                                this.incrementAndGetMessageCounter(),
+                                Utils.now(),
+                                "acknowledge_role",
+                                "truck_id",
+                                Integer.toString(this.getTruckId()),
+                                "address",
+                                this.server.getSocketAddress().toString());
+                            this.sendMessageTo(acknowledgeRoleMessage, leaderAddress);
+                            if (newRole == "follower"){
+                                this.server.joinPlatoonAsFollower(leaderAddress);
+                            } else {
+                                
+                                Platoon platoon = Platoon.fromJson(messageBody.get("platoon"));
+
+                                this.server.joinPlatoonAsPrimeFollower(leaderAddress, platoon);
+                            }
+                            truckState = "join";
+                        } else {
+                            this.logger.warning("Unknown role provided by potential leader. Ignoring.");
+                        }
+
+                    default:
+                        break;
+                }
             }
         }
     };
+    
 
     public void run() {
+        int waitForJoin = 0;
+        int waitForRole = 0;
         while (true) {
             processReceivedMessages();
+            truckState = "discovery";
+            switch (truckState) {
+                case "discovery":
+                    if (waitForJoin > 4){
+                        this.logger.info("No leader available to join. Stopping");
+                        this.changeSpeed(0);
+                        return;
+                    }
+                    waitForJoin++;
+                    break;
+                case "wait_for_role":
+                    if (waitForRole > 4){
+                        this.logger.info("Potential leader never sent role back. Going back to discovery.");
+                        waitForJoin = 0;
+                        waitForRole = 0;
+                        truckState = "discovery";
+                    }
+                    break;
+                case "join":
+                    this.logger.info("Platoon found. Leaving Truck role.");
+                    return;
+                default:
+                    break;
+            }
             this.logger.info("Processed messages. Sleeping for 1 sec.");
             try {
                 Thread.sleep(1000);
@@ -128,8 +198,12 @@ public class Truck extends Thread {
         }
     }
 
-    public void addMessageToQueue(Message message) {
-        this.messageQueue.add(message);
+    protected void changeDirection(String newDirection) {
+        this.setDirection(newDirection);
+    }
+
+    protected void changeSpeed(double newSpeed) {
+        this.setSpeed(newSpeed);
     }
 
 }

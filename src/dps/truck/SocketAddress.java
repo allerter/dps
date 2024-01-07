@@ -20,5 +20,10 @@ public class SocketAddress {
     public String toString() {
         return this.ipAddress + ":" + this.port;
     }
+
+    public static SocketAddress fromString(String s) {
+        String[] matches = s.split(":");
+        return new SocketAddress(matches[0], Integer.valueOf(matches[1]));
+    }
     
 }

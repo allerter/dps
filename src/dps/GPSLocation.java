@@ -23,4 +23,14 @@ public class GPSLocation {
     public void setLongitude(double longitude) {
         this.longitude = longitude;
     }
+
+    @Override
+    public String toString() {
+        return String.format("%f,%f", this.latitude, this.longitude);
+    }
+
+    public static GPSLocation fromString(String s) {
+        String[] location = s.split(",");
+        return new GPSLocation(Double.valueOf(location[0]), Double.valueOf(location[1]));
+    }
 }
