@@ -2,6 +2,7 @@ package dps.platoon;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import dps.GPSLocation;
 import dps.Message;
@@ -44,15 +45,48 @@ public class Leader extends Truck implements PlatoonTruck{
     }
     
     public void removeFollower(Truck truck){
-        throw new UnsupportedOperationException("Unimplemented method");
+
+        //throw new UnsupportedOperationException("Unimplemented method");
     }
     
     public void addFollower(Truck truck){
-        throw new UnsupportedOperationException("Unimplemented method");
+        if (!platoon.contains(follower)) {
+            // Create a message object with a unique ID, type, sender, receiver, and body
+            Message message = new Message(/* some ID */, "join", this.id,follower.id,null);
+            // platoon ID, size, speed, and position to the body of the message
+            message.body = new HashMap<>();
+            message.body.put("platoonID", platoon.id);
+            message.body.put("platoonSize", String.valueOf(platoon.size()));
+            message.body.put("platoonSpeed", String.valueOf(platoon.speed));
+            message.body.put("platoonPosition", String.valueOf(platoon.position));
+            // Send the message to the follower
+            sendMessage(message); 
+            platoon.add(follower);
+            for (SocketAddress truckAddress : trucksAddresses) {
+                sendMessage(message, truckAddress.ipAddress, truckAddress.port);
+            }
+        }
+       // throw new UnsupportedOperationException("Unimplemented method");
     }
     
     public void startPlatoon(){
-        throw new UnsupportedOperationException("Unimplemented method");
+        boolean isPlatooning;
+        if (!platoon.isEmpty() && !isPlatooning) {
+            isPlatooning = true;
+            // Create a message object with a unique ID, type, sender, receiver, and body
+            Message message = new Message(/* some ID */, "start", this.id, null, null);
+            // platoon ID, size, speed, and position to the body of the message
+            message.body = new HashMap<>();
+            message.body.put("platoonID", platoon.id); 
+            message.body.put("platoonSize", String.valueOf(platoon.size()));
+            message.body.put("platoonSpeed", String.valueOf(platoon.speed));
+            message.body.put("platoonPosition", String.valueOf(platoon.position));
+            // Send the message to all the trucksAddresses
+            for (SocketAddress truckAddress : trucksAddresses) {
+                sendMessage(message, truckAddress.ipAddress, truckAddress.port);
+            }
+        }
+       // throw new UnsupportedOperationException("Unimplemented method");
     };
     
     public void discover(){

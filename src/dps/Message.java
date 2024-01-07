@@ -10,7 +10,7 @@ public class Message {
     int id;
     String type;
     String utc;
-    Map<String, String> body = new HashMap<String, String>();
+    public Map<String, String> body = new HashMap<String, String>();
 
     public Message(int id, String utc, String type, String... args) {
         this.id = id;

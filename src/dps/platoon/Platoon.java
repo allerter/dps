@@ -1,9 +1,15 @@
 package dps.platoon;
 
+import java.util.ArrayList;
+
+import dps.truck.Truck;
+
 public class Platoon {
     private Leader leader;
     private PrimeFollower primeFollower;
     private Follower[] followers;
+    public String id;
+    public char[] speed;
     public Platoon(Leader leader, PrimeFollower primeFollower, Follower[] followers) {
         this.leader = leader;
         this.primeFollower = primeFollower;
@@ -27,5 +33,17 @@ public class Platoon {
     }
     public void setFollowers(Follower[] followers) {
         this.followers = followers;
+    }
+
+    public ArrayList<Truck> getTrucks() {
+        return null;
+    }
+
+    public boolean isEmpty() {
+        return false;
+    }
+
+    public char[] size() {
+        return null;
     }
 }
