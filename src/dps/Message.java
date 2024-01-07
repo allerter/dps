@@ -8,11 +8,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class Message {
     int id;
-    String type;
+    public String type;
     String utc;
     public Map<String, String> body = new HashMap<String, String>();
+	public Object receiver;
 
-    public Message(int id, String utc, String type, String... args) {
+    public Message() {
         this.id = id;
         this.utc = utc;
         this.type = type;
