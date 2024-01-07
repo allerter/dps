@@ -1,31 +1,39 @@
 package dps.platoon;
 
-public class Platoon {
-    private Leader leader;
-    private PrimeFollower primeFollower;
-    private Follower[] followers;
-    public Platoon(Leader leader, PrimeFollower primeFollower, Follower[] followers) {
-        this.leader = leader;
-        this.primeFollower = primeFollower;
-        this.followers = followers;
-    }
+import dps.truck.SocketAddress;
 
-    public Leader getLeader() {
-        return leader;
+public class Platoon {
+    PlatoonTruckInfo primeFollower;
+    PlatoonTruckInfo follower1;
+    PlatoonTruckInfo follower2;
+    public Platoon(PlatoonTruckInfo primeFollower, PlatoonTruckInfo follower1, PlatoonTruckInfo follower2) {
+        this.primeFollower = primeFollower;
+        this.follower1 = follower1;
+        this.follower2 = follower2;
     }
-    public void setLeader(Leader leader) {
-        this.leader = leader;
-    }
-    public PrimeFollower getPrimeFollower() {
+    public PlatoonTruckInfo getPrimeFollower() {
         return primeFollower;
     }
-    public void setPrimeFollower(PrimeFollower primeFollower) {
+    public void setPrimeFollower(PlatoonTruckInfo primeFollower) {
         this.primeFollower = primeFollower;
     }
-    public Follower[] getFollowers() {
-        return followers;
+    public PlatoonTruckInfo getFollower1() {
+        return follower1;
     }
-    public void setFollowers(Follower[] followers) {
-        this.followers = followers;
+    public void setFollower1(PlatoonTruckInfo follower1) {
+        this.follower1 = follower1;
     }
+    public PlatoonTruckInfo getFollower2() {
+        return follower2;
+    }
+    public void setFollower2(PlatoonTruckInfo follower2) {
+        this.follower2 = follower2;
+    }
+    
+}
+
+
+class PlatoonTruckInfo {
+    int id;
+    SocketAddress socketAddress; 
 }
