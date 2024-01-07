@@ -3,13 +3,21 @@ package dps.platoon;
 import dps.truck.SocketAddress;
 
 public class Platoon {
+    PlatoonTruckInfo leader;
     PlatoonTruckInfo primeFollower;
     PlatoonTruckInfo follower1;
     PlatoonTruckInfo follower2;
-    public Platoon(PlatoonTruckInfo primeFollower, PlatoonTruckInfo follower1, PlatoonTruckInfo follower2) {
+    public Platoon(PlatoonTruckInfo leader, PlatoonTruckInfo primeFollower, PlatoonTruckInfo follower1, PlatoonTruckInfo follower2) {
+        this.leader = leader;
         this.primeFollower = primeFollower;
         this.follower1 = follower1;
         this.follower2 = follower2;
+    }
+    public PlatoonTruckInfo getLeader() {
+        return leader;
+    }
+    public void setLeader(PlatoonTruckInfo leader) {
+        this.leader = leader;
     }
     public PlatoonTruckInfo getPrimeFollower() {
         return primeFollower;
