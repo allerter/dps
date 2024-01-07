@@ -19,8 +19,9 @@ public class Truck extends Thread {
     GPSLocation location;
     CollisionSensor collisionSensor;
 
+    protected TruckServer server;
 
-    public Truck(int id, String direction, float speed, GPSLocation destination, GPSLocation location, SocketAddress socketAddress) throws IOException {
+    public Truck(int id, String direction, double speed, GPSLocation destination, GPSLocation location, TruckServer server) throws IOException {
         this.logger = Logger.getLogger(this.getClass().getSimpleName());
         // TODO: add that at the log message
         // text is formatted like this: Truck # - {log_message}
