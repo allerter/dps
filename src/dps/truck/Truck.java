@@ -11,6 +11,7 @@ import dps.CollisionSensor;
 import dps.GPSLocation;
 import dps.Message;
 import dps.Utils;
+import dps.platoon.Platoon;
 
 public class Truck extends Thread {
     int truckId;
@@ -141,7 +142,7 @@ public class Truck extends Thread {
                                 this.server.joinPlatoonAsFollower(leaderAddress);
                             } else {
                                 
-                                SocketAddress[] platoon = (SocketAddress[]) Arrays.asList(messageBody.get("platoon").split(",")).stream().map(SocketAddress::fromString).collect(Collectors.toList()).toArray();
+                                Platoon platoon = Platoon.fromJson(messageBody.get("platoon"));
 
                                 this.server.joinPlatoonAsPrimeFollower(leaderAddress, platoon);
                             }

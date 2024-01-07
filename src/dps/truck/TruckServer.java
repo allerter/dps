@@ -13,6 +13,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import dps.Message;
 import dps.platoon.Follower;
+import dps.platoon.Platoon;
 import dps.platoon.PrimeFollower;
 
 public class TruckServer extends Thread {
@@ -99,7 +100,7 @@ public class TruckServer extends Thread {
         }
     }
 
-    public void joinPlatoonAsPrimeFollower(SocketAddress leaderAddress, SocketAddress[] platoonTrucks) {
+    public void joinPlatoonAsPrimeFollower(SocketAddress leaderAddress, Platoon platoon) {
         if (!(this.truck instanceof Truck)){
             throw new RuntimeErrorException(null, "Truck joining platoon isn't of type Truck, but " + this.truck.getClass().getSimpleName());
         }
@@ -112,7 +113,7 @@ public class TruckServer extends Thread {
                 this.truck.getDestination(), 
                 this.truck.getLocation(),
                 this,
-                platoonTrucks
+                platoon
                 );
                 this.truck.start();
             } catch (IOException e) {
