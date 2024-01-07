@@ -43,6 +43,9 @@ public class TruckServer extends Thread {
                 } catch (IOException e) {
                     System.err.println("Error in communication with the client: " + e.getMessage());
                 }
+                if (!this.truck.isAlive()){
+                    return;
+                }
             }
         } catch (IOException e) {
             System.err.println("Error starting server on port " + this.socketAddress.toString() + ": " + e.getMessage());
