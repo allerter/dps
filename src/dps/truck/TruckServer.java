@@ -53,6 +53,10 @@ public class TruckServer extends Thread {
     public void addMessageToQueue(Message message) {
         this.messageQueue.add(message);
     }
+
+    public SocketAddress getSocketAddress() {
+        return this.socketAddress;
+    }
     public LinkedBlockingQueue<Message> getMessageQueue() {
         return messageQueue;
     }
