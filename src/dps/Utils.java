@@ -10,6 +10,10 @@ public class Utils {
         return dtf.format(LocalDateTime.now());
     }
 
+    public static LocalDateTime nowDateTime() {
+        return LocalDateTime.now();
+    }
+
     /**
      * Calculate distance between two points in latitude and longitude taking
      * into account height difference. If you are not interested in height
