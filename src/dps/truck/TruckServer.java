@@ -20,12 +20,14 @@ import dps.platoon.Platoon;
 import dps.platoon.PrimeFollower;
 
 public class TruckServer extends Thread {
+    private Logger logger;
     private SocketAddress socketAddress;
     private Truck truck;
     LinkedBlockingQueue<Message> messageQueue = new LinkedBlockingQueue<>();
     AtomicInteger messageCounter = new AtomicInteger(0);
 
     public TruckServer(SocketAddress socketAddress) throws IOException {
+        this.logger = Logger.getLogger(this.getClass().getSimpleName());
         this.socketAddress = socketAddress;
     }
 
