@@ -1,5 +1,7 @@
 package dps.platoon;
 
+import java.util.ArrayList;
+
 import dps.truck.SocketAddress;
 
 public class Platoon {
@@ -41,7 +43,16 @@ public class Platoon {
     public static Platoon fromJson(String string) {
         throw new UnsupportedOperationException("Unimplemented method");
     }
-    
+ 
+    public SocketAddress[] getSocketAddresses() {
+        ArrayList<SocketAddress> socketAddresses = new ArrayList<>();
+        socketAddresses.add(leader.socketAddress);
+        socketAddresses.add(primeFollower.socketAddress);
+        socketAddresses.add(follower1.socketAddress);
+        socketAddresses.add(follower2.socketAddress);
+        return (SocketAddress[]) socketAddresses.toArray();
+    }
+
 }
 
 
