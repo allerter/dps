@@ -127,7 +127,7 @@ public class Truck extends Thread {
         }
     };
 
-    private void sendMessageTo(SocketAddress leaderAddress, String messageType, String... messageBody) {
+    protected void sendMessageTo(SocketAddress leaderAddress, String messageType, String... messageBody) {
         this.server.sendMessageTo(leaderAddress, messageType, messageBody);
     }
 
