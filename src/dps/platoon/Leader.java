@@ -18,6 +18,7 @@ public class Leader extends Truck implements PlatoonTruck{
     private ArrayList<SocketAddress> orderedPlatoonSocketAddresses = new ArrayList<>();
     Platoon platoon;
     ArrayList<PotentialFollowerInfo> joinedTrucksList = new ArrayList<>();
+    SocketAddress[] otherTrucksSocketAddresses;
 
     class PotentialFollowerInfo {
         public PotentialFollowerInfo(int senderId, GPSLocation fromString, SocketAddress senderAddress) {
@@ -27,11 +28,14 @@ public class Leader extends Truck implements PlatoonTruck{
         SocketAddress address;
     }
 
-    public Leader(int id, String direction, double speed, GPSLocation destination, GPSLocation location, TruckServer server, SocketAddress[] otherTrucks) throws IOException {
+    public Leader(int id, String direction, double speed, GPSLocation destination, GPSLocation location, TruckServer server, SocketAddress[] otherTrucksSocketAddresses) throws IOException {
         super(id, direction, speed, destination, location, server);
-        // Send discovery message to all trucks
+        this.otherTrucksSocketAddresses = otherTrucksSocketAddresses;
+    }
 
-        this.broadcast(otherTrucks, "discovery");
+    public Leader(int id, String direction, double speed, GPSLocation destination, GPSLocation location, TruckServer server, Platoon platoon) throws IOException {
+        super(id, direction, speed, destination, location, server);
+        this.platoon = platoon;
     }
 
     public void broadcast(SocketAddress[] truckSocketAddresses, String messageType, String... args){
@@ -110,9 +114,16 @@ public class Leader extends Truck implements PlatoonTruck{
         }
     }
 
+    
     @Override
     public void run() {
         logger.info("Beginning operation.");
+
+        if (this.platoon == null){
+            // Send discovery message to all trucks
+            this.broadcast(otherTrucksSocketAddresses, "discovery");
+        }
+
         int waitForJoin = 0;
         truckState = "discovery";
         LocalDateTime timeOfLastMessage = Utils.nowDateTime();
