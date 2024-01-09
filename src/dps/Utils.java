@@ -14,6 +14,10 @@ public class Utils {
         return LocalDateTime.now();
     }
 
+    public static LocalDateTime dateTimeFromString(String s){
+        return LocalDateTime.parse(s, dtf);
+    }
+
     /**
      * Calculate distance between two points in latitude and longitude taking
      * into account height difference. If you are not interested in height
@@ -51,4 +55,6 @@ public class Utils {
         return Math.sqrt(distance);
     }
 
+
+    
 }

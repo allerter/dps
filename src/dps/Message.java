@@ -86,8 +86,8 @@ public class Message {
     public String getType() {
         return type;
     }
-    public String getUtc() {
-        return utc;
+    public LocalDateTime getUtc() {
+        return Utils.dateTimeFromString(this.utc);
     }
 
     public static Message fromJson(String receivedMessage) throws JsonMappingException, JsonProcessingException {
