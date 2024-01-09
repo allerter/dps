@@ -46,8 +46,13 @@ public class TruckServer extends Thread {
             while (!Thread.currentThread().isInterrupted()) {
                 try (Socket clientSocket = serverSocket.accept();
                         BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()))) {
-                    String receivedMessage = in.readLine();
-                    this.addMessageToQueue(Message.fromJson(receivedMessage));
+                            String line;
+
+                            StringBuilder rStringBuilder = new StringBuilder();
+                            while ((line = in.readLine()) != null) {
+                               rStringBuilder.append(line);
+                            }
+                            String receivedMessage = rStringBuilder.toString();
                 
                 } catch (JsonProcessingException e) {
                     System.out.println(e.getStackTrace().toString());
