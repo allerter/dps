@@ -1,6 +1,8 @@
 package dps.platoon;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Map;
 
@@ -16,6 +18,7 @@ public class Leader extends Truck implements PlatoonTruck{
     private ArrayList<SocketAddress> orderedPlatoonSocketAddresses = new ArrayList<>();
     Platoon platoon;
     ArrayList<PotentialFollowerInfo> joinedTrucksList = new ArrayList<>();
+    SocketAddress[] otherTrucksSocketAddresses;
 
     class PotentialFollowerInfo {
         public PotentialFollowerInfo(int senderId, GPSLocation fromString, SocketAddress senderAddress) {
@@ -25,26 +28,22 @@ public class Leader extends Truck implements PlatoonTruck{
         SocketAddress address;
     }
 
-    public Leader(int id, String direction, double speed, GPSLocation destination, GPSLocation location, TruckServer server, SocketAddress[] otherTrucks) throws IOException {
+    public Leader(int id, String direction, double speed, GPSLocation destination, GPSLocation location, TruckServer server, SocketAddress[] otherTrucksSocketAddresses) throws IOException {
         super(id, direction, speed, destination, location, server);
-        // Send discovery message to all trucks
-        this.broadcast(otherTrucks);
+        this.otherTrucksSocketAddresses = otherTrucksSocketAddresses;
     }
 
-    public void broadcast(SocketAddress[] otherTrucksSocketAddresses){
+    public Leader(int id, String direction, double speed, GPSLocation destination, GPSLocation location, TruckServer server, Platoon platoon) throws IOException {
+        super(id, direction, speed, destination, location, server);
+        this.platoon = platoon;
+    }
+
+    public void broadcast(SocketAddress[] truckSocketAddresses, String messageType, String... args){
         this.logger.info("Sending discovery message to trucks.");
-        for (SocketAddress truckAddress : otherTrucksSocketAddresses) {
-            this.logger.finer("Sending message to " + truckAddress.toString());
-            Message message = new Message(
-                incrementAndGetMessageCounter(),
-                Utils.now(),
-                "discovery",
-                "truck_id",
-                Integer.toString(this.getTruckId()),
-                "address",
-                this.server.getSocketAddress().toString()
-            );
-            this.sendMessageTo(message, truckAddress);
+        
+        for (SocketAddress truckAddress : truckSocketAddresses) {
+            this.logger.finer("Sending " + messageType + " message to " + truckAddress.toString());
+            this.server.sendMessageTo(truckAddress, messageType, args);
         }
     }
     
@@ -106,40 +105,28 @@ public class Leader extends Truck implements PlatoonTruck{
             PotentialFollowerInfo primeFollower = joinedTrucksList.remove(0);
             
             // closest truck is prime follower
-            Message primeFollowerRolMessage = new Message(
-                this.incrementAndGetMessageCounter(),
-                Utils.now(),
-                "role",
-                "truck_id",
-                String.valueOf(this.getTruckId()),
-                "address",
-                this.server.getSocketAddress().toString(),
-                "role",
-                "prime_follower");
-            this.sendMessageTo(primeFollowerRolMessage, primeFollower.address);
+            this.sendMessageTo(primeFollower.address, "role", "role", "prime_follower");
             
             for (PotentialFollowerInfo potentialFollowerInfo : joinedTrucksList) {
-                Message followerRolMessage = new Message(
-                    this.incrementAndGetMessageCounter(),
-                    Utils.now(),
-                    "role",
-                    "truck_id",
-                    String.valueOf(this.getTruckId()),
-                    "address",
-                    this.server.getSocketAddress().toString(),
-                    "role",
-                    "follower");
-                this.sendMessageTo(followerRolMessage, potentialFollowerInfo.address);
+                this.sendMessageTo(potentialFollowerInfo.address, "role", "role", "follower");
             }
             truckState = "journey";
         }
     }
 
+    
     @Override
     public void run() {
         logger.info("Beginning operation.");
+
+        if (this.platoon == null){
+            // Send discovery message to all trucks
+            this.broadcast(otherTrucksSocketAddresses, "discovery");
+        }
+
         int waitForJoin = 0;
         truckState = "discovery";
+        LocalDateTime timeOfLastMessage = Utils.nowDateTime();
         while (true) {
             processReceivedMessages();
             switch (truckState) {
@@ -154,7 +141,14 @@ public class Leader extends Truck implements PlatoonTruck{
                     }                    
                     waitForJoin++;
                     break;          
-                default:
+                case "journey":
+                    if (ChronoUnit.SECONDS.between(timeOfLastMessage, Utils.nowDateTime()) >= 5){
+                        this.broadcast(platoon.getSocketAddresses(), "ping");
+                    }
+                    this.logger.info("Moving to destination at speed " + this.getSpeed());
+                    break;
+                    
+                    default:
                     this.logger.severe("Truck in unknown truckState: " + truckState);
                     break;
             }

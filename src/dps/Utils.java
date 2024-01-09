@@ -1,11 +1,21 @@
 package dps;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 public class Utils {
+    static final DateTimeFormatter dtf = DateTimeFormatter.ofPattern("uuuu/MM/dd HH:mm:ss");
 
     public static String now() {
-        return LocalDate.now().toString();
+        return dtf.format(LocalDateTime.now());
+    }
+
+    public static LocalDateTime nowDateTime() {
+        return LocalDateTime.now();
+    }
+
+    public static LocalDateTime dateTimeFromString(String s){
+        return LocalDateTime.parse(s, dtf);
     }
 
     /**
@@ -45,4 +55,6 @@ public class Utils {
         return Math.sqrt(distance);
     }
 
+
+    
 }

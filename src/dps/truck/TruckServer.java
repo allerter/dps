@@ -6,22 +6,28 @@ import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Logger;
 
 import javax.management.RuntimeErrorException;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import dps.Message;
+import dps.Utils;
 import dps.platoon.Follower;
 import dps.platoon.Platoon;
 import dps.platoon.PrimeFollower;
 
 public class TruckServer extends Thread {
+    private Logger logger;
     private SocketAddress socketAddress;
     private Truck truck;
     LinkedBlockingQueue<Message> messageQueue = new LinkedBlockingQueue<>();
+    AtomicInteger messageCounter = new AtomicInteger(0);
 
     public TruckServer(SocketAddress socketAddress) throws IOException {
+        this.logger = Logger.getLogger(this.getClass().getSimpleName());
         this.socketAddress = socketAddress;
     }
 
@@ -40,8 +46,13 @@ public class TruckServer extends Thread {
             while (!Thread.currentThread().isInterrupted()) {
                 try (Socket clientSocket = serverSocket.accept();
                         BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()))) {
-                    String receivedMessage = in.readLine();
-                    this.addMessageToQueue(Message.fromJson(receivedMessage));
+                            String line;
+
+                            StringBuilder rStringBuilder = new StringBuilder();
+                            while ((line = in.readLine()) != null) {
+                               rStringBuilder.append(line);
+                            }
+                            String receivedMessage = rStringBuilder.toString();
                 
                 } catch (JsonProcessingException e) {
                     System.out.println(e.getStackTrace().toString());
@@ -58,6 +69,10 @@ public class TruckServer extends Thread {
         
     }
 
+    public int incrementAndGetMessageCounter() {
+        return messageCounter.incrementAndGet();
+    }
+
     public void finishCurrentTruck() {
         try {
             this.truck.join();
@@ -68,6 +83,26 @@ public class TruckServer extends Thread {
 
     public void addMessageToQueue(Message message) {
         this.messageQueue.add(message);
+    }
+
+
+    public void sendMessageTo(SocketAddress socketAddress, String messageType, String... args) {
+        // Add basic info to message body
+        String[] fullArgs = new String[args.length + 4];
+        int counter = 0;
+        for(String s : args) fullArgs[counter++] = s;
+        fullArgs[counter] = "truck_id";
+        fullArgs[counter + 1] = String.valueOf(this.truck.getTruckId());
+        fullArgs[counter + 2] = "address";
+        fullArgs[counter + 3] = this.getSocketAddress().toString();
+
+        
+        Message message = new Message(this.incrementAndGetMessageCounter(), Utils.now(), messageType, fullArgs);
+        try {
+            TruckClient.sendMessage(socketAddress, message);
+        } catch (IOException e) {
+            this.logger.severe("Error sending message: " + e.getMessage());
+        }
     }
 
     public SocketAddress getSocketAddress() {
