@@ -15,7 +15,7 @@ public class TruckClient {
                 PrintWriter out = new PrintWriter(socket.getOutputStream(), true)) {
             out.println(message.toJson());
         } catch (JsonProcessingException e) {
-            System.out.println(e.getStackTrace().toString());
+            System.out.println(e.getMessage());
         } catch (IOException e) {
             System.err.println("Couldn't get I/O for the connection to " + socketAddress.toString());
         }
