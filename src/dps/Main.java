@@ -11,12 +11,13 @@ import java.util.logging.SimpleFormatter;
 import dps.platoon.Leader;
 import dps.truck.SocketAddress;
 import dps.truck.Truck;
+import dps.truck.TruckServer;
 
 public class Main {
 
     static {
         // Set up logging
-        System.setProperty("java.util.logging.SimpleFormatter.format", "[%1$tF %1$tT] [%4$-7s] [%3$-22s] %5$s %n");        
+        System.setProperty("java.util.logging.SimpleFormatter.format", "[%1$tF %1$tT] [%4$-7s] [%3$-22s] %5$s %n");
         ConsoleHandler consoleHandler = new ConsoleHandler();
         consoleHandler.setFormatter(new SimpleFormatter());
 
@@ -32,43 +33,52 @@ public class Main {
 
         // initialize platoon:
         // 1 Leader, 1 Prime Follower, 2 Followers
-        Truck[] trucks = new Truck[3];
+        TruckServer[] truckCores = new TruckServer[3];
         try {
 
-            trucks[0] = new Truck(1, "straight", 0, new GPSLocation(50.110924, 8.682127),
-                    new GPSLocation(50.5136, 7.4653), new SocketAddress("127.0.0.1", 5001));
-            trucks[1] = new Truck(2, "straight", 0, new GPSLocation(50.110924, 8.682127),
-                    new GPSLocation(49.5136, 7.4653),
-                    new SocketAddress("127.0.0.1", 5002));
-            trucks[2] = new Truck(3, "straight", 0, new GPSLocation(50.110924, 8.682127),
-                    new GPSLocation(48.5136, 7.4653),
-                    new SocketAddress("127.0.0.1", 5003));
-
-            for (Truck truck : trucks) {
-                truck.start();
-                logger.info("Deployed Truck " + truck.getId());
-                Thread.sleep(1000);
-            }
-        } catch (IOException | InterruptedException e) {
+            truckCores[0] = new TruckServer(new SocketAddress("127.0.0.1", 5001));
+            truckCores[1] = new TruckServer(new SocketAddress("127.0.0.1", 5002));
+            truckCores[2] = new TruckServer(new SocketAddress("127.0.0.1", 5003));
+        } catch (IOException e) {
             e.printStackTrace();
             return;
         }
 
-        Leader leader;
         try {
-            SocketAddress[] trucksAddresses = new SocketAddress[trucks.length];
-            for (int i=0; i < trucks.length; i++) {
-                trucksAddresses[i] = trucks[i].getSocketAddress();
+
+            truckCores[0].setTruck(new Truck(1, "straight", 0, new GPSLocation(50.110924, 8.682127),
+                    new GPSLocation(50.5136, 7.4653), truckCores[0]));
+            truckCores[1].setTruck(new Truck(2, "straight", 0, new GPSLocation(50.110924, 8.682127),
+                    new GPSLocation(49.5136, 7.4653),
+                    truckCores[1]));
+            truckCores[2].setTruck(new Truck(3, "straight", 0, new GPSLocation(50.110924, 8.682127),
+                    new GPSLocation(48.5136, 7.4653),
+                    truckCores[2]));
+
+            for (TruckServer truckCore : truckCores) {
+                truckCore.start();
+                logger.info("Deployed Truck " + truckCore.getTruck().getTruckId());
             }
-            leader = new Leader(
+        } catch (IOException e) {
+            e.printStackTrace();
+            return;
+        }
+
+        try {
+            SocketAddress[] trucksAddresses = new SocketAddress[truckCores.length];
+            for (int i = 0; i < truckCores.length; i++) {
+                trucksAddresses[i] = truckCores[i].getSocketAddress();
+            }
+            TruckServer leaderCore = new TruckServer(new SocketAddress("127.0.0.1", 5000));
+            leaderCore.setTruck(new Leader(
                     0,
                     "straight",
-                    0,
+                    0.0,
                     new GPSLocation(50.110924, 8.682127),
                     new GPSLocation(51.5136, 7.4653),
-                    new SocketAddress("127.0.0.1", 5000),
-                    trucksAddresses);
-            leader.start();
+                    leaderCore,
+                    trucksAddresses));
+            leaderCore.start();
             logger.info("Deployed  Leader");
             Thread.sleep(1000);
         } catch (IOException | InterruptedException e) {
@@ -77,7 +87,7 @@ public class Main {
             return;
         }
 
-        for (Truck truck : trucks) {
+        for (TruckServer truck : truckCores) {
             try {
                 truck.join();
             } catch (InterruptedException e) {
