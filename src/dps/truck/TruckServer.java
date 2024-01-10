@@ -53,6 +53,7 @@ public class TruckServer extends Thread {
                                rStringBuilder.append(line);
                             }
                             String receivedMessage = rStringBuilder.toString();
+                            this.addMessageToQueue(Message.fromJson(receivedMessage));
                 
                 } catch (JsonProcessingException e) {
                     System.out.println(e.getStackTrace().toString());
