@@ -3,7 +3,10 @@ package dps.platoon;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.Map;
 
 import dps.GPSLocation;
@@ -11,9 +14,11 @@ import dps.Message;
 import dps.truck.SocketAddress;
 import dps.truck.Truck;
 import dps.truck.TruckServer;
+import dps.truck.TruckServer;
 import dps.Utils;
+import dps.platoon.Platoon;
 
-public class Leader extends Truck implements PlatoonTruck{
+public class Leader extends Truck implements PlatoonTruck {
 
     private ArrayList<SocketAddress> orderedPlatoonSocketAddresses = new ArrayList<>();
     Platoon platoon;
@@ -46,24 +51,24 @@ public class Leader extends Truck implements PlatoonTruck{
             this.server.sendMessageTo(truckAddress, messageType, args);
         }
     }
-    
-    public void removeFollower(Truck truck){
+
+    public void removeFollower(Truck truck) {
         throw new UnsupportedOperationException("Unimplemented method");
     }
-    
-    public void addFollower(Truck truck){
+
+    public void addFollower(Truck truck) {
         throw new UnsupportedOperationException("Unimplemented method");
     }
-    
-    public void startPlatoon(){
-        throw new UnsupportedOperationException("Unimplemented method");
-    };
-    
-    public void discover(){
+
+    public void startPlatoon() {
         throw new UnsupportedOperationException("Unimplemented method");
     };
 
-    @Override
+    public void discover() {
+        throw new UnsupportedOperationException("Unimplemented method");
+    };
+
+    //@Override
     public void disconnect() {
         throw new UnsupportedOperationException("Unimplemented method");
     }
@@ -127,11 +132,14 @@ public class Leader extends Truck implements PlatoonTruck{
         int waitForJoin = 0;
         truckState = "discovery";
         LocalDateTime timeOfLastMessage = Utils.nowDateTime();
+        LocalDateTime timeOfLastMessage = Utils.nowDateTime();
         while (true) {
             processReceivedMessages();
-            switch (truckState) {
+            switch (truckState) { 
                 case "discovery":
                     // Wait 5 seconds for other trucks to join
+                    if (waitForJoin == 5 && joinedTrucksList.size() != 3) {
+                        logger.info("Discovery unsuccessful. Trucked joined: " + joinedTrucksList.size());
                     if (waitForJoin == 5 && joinedTrucksList.size() != 3) {
                         logger.info("Discovery unsuccessful. Trucked joined: " + joinedTrucksList.size());
                         truckState = "roaming";
@@ -160,4 +168,3 @@ public class Leader extends Truck implements PlatoonTruck{
         }
     }
 }
-

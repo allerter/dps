@@ -43,6 +43,9 @@ public class PrimeFollower extends Truck implements PlatoonTruck {
     public PrimeFollower(int id, String direction, double speed, GPSLocation destination, GPSLocation location,
             TruckServer server, Platoon platoon) throws IOException {
         super(id, direction, speed, destination, location, server);
+    public PrimeFollower(int id, String direction, double speed, GPSLocation destination, GPSLocation location,
+            TruckServer server, Platoon platoon) throws IOException {
+        super(id, direction, speed, destination, location, server);
         this.platoon = platoon;
         this.platoonAddresses = new ArrayList<>();
         this.lastLeaderPingTime = LocalDateTime.now(); // Initialize last ping time

@@ -50,9 +50,14 @@ class MessageDeserializer extends StdDeserializer<Message> {
 
 public class Message {
     int id;
-    String type;
+    public String type;
     String utc;
-    Map<String, String> body = new HashMap<String, String>();
+    public Map<String, String> body = new HashMap<String, String>();
+	public Object receiver;
+
+    final static ObjectMapper mapper = JsonMapper.builder()
+                            .addModule(new JavaTimeModule().addDeserializer(Message.class, new MessageDeserializer()))
+                            .build();
 
     final static ObjectMapper mapper = JsonMapper.builder()
                             .addModule(new JavaTimeModule().addDeserializer(Message.class, new MessageDeserializer()))

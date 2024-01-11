@@ -2,16 +2,20 @@ package dps.platoon;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Map;
 
 import dps.GPSLocation;
 import dps.Message;
 import dps.Utils;
+import dps.Utils;
 import dps.truck.SocketAddress;
 import dps.truck.Truck;
+import dps.truck.TruckServer;
 import dps.truck.TruckServer;
 
 public class Follower extends Truck {
 
+    SocketAddress leaderAddress;
     SocketAddress leaderAddress;
 
     public Follower(int id, String direction, double speed, GPSLocation destination, GPSLocation location, TruckServer server, SocketAddress leaderAddress) throws IOException {
@@ -19,11 +23,11 @@ public class Follower extends Truck {
         this.leaderAddress = leaderAddress;
     }
 
-    public void sendMessageToLeader(Message m){
+    public void sendMessageToLeader(Message m) {
         throw new UnsupportedOperationException("Unimplemented method");
     };
-    
-    public void disconnect(){
+
+    public void disconnect() {
         throw new UnsupportedOperationException("Unimplemented method");
     };
 

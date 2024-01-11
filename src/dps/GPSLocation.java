@@ -34,3 +34,9 @@ public class GPSLocation {
         return new GPSLocation(Double.valueOf(location[0]), Double.valueOf(location[1]));
     }
 }
+
+    public static GPSLocation fromString(String s) {
+        String[] location = s.split(",");
+        return new GPSLocation(Double.valueOf(location[0]), Double.valueOf(location[1]));
+    }
+}
