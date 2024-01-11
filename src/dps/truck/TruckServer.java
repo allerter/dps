@@ -50,9 +50,10 @@ public class TruckServer extends Thread {
 
         @Override
         public String toString() {
-            return String.format("Messages(%s) with %d tries, lastly at %s",
+            return String.format("Messages(ids=%s, tries=%d, receiver=%s), lastly at %s",
                     this.correspondingIdsList.toString(),
                     this.tries,
+                    this.receiver.toString(),
                     this.lastTry.toString());
         }
 
