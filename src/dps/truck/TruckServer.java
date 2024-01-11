@@ -100,8 +100,20 @@ public class TruckServer extends Thread {
                             while ((line = in.readLine()) != null) {
                                rStringBuilder.append(line);
                             }
-                            String receivedMessage = rStringBuilder.toString();
-                            this.addMessageToQueue(Message.fromJson(receivedMessage));
+                            Message receivedMessage = Message.fromJson(rStringBuilder.toString());
+                            
+                            // Check to see if received message acknowledges any sent messages
+                            // If it does, remove it from our unacknowledged messages
+                            int ackId = Integer.valueOf(receivedMessage.getBody().get("ack_id"));
+                            for (UnacknowledgedMessage messageInfo: unacknowledgedSentMessages){
+                                if (messageInfo.getCorrespondingIdsList().contains(ackId)){
+                                    unacknowledgedSentMessages.remove(messageInfo);
+                                    this.logger.fine(messageInfo.toString() + "was acknowledged.");
+                                    break;
+                                }
+                            }
+        
+                            this.addMessageToQueue(receivedMessage);
                 
                 } catch (JsonProcessingException e) {
                     System.out.println(e.getMessage());
