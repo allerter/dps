@@ -38,11 +38,13 @@ public class TruckServer extends Thread {
         LocalDateTime lastTry;
         Message message;
         int tries = 1;
+        SocketAddress receiver;
         ArrayList<Integer> correspondingIdsList = new ArrayList<>();
 
         public UnacknowledgedMessage(Message message, LocalDateTime lastTry) {
             this.message = message;
             this.lastTry = lastTry;
+            this.receiver = SocketAddress.fromString(message.getBody().get("receiver"));
             this.correspondingIdsList.add(message.getId());
         }
 
