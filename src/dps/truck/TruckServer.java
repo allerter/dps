@@ -126,6 +126,29 @@ public class TruckServer extends Thread {
                 if (!this.truck.isAlive()){
                     return;
                 }
+
+                // Check if messages from before have been acknowledged
+                for (UnacknowledgedMessage messageInfo : unacknowledgedSentMessages) {
+                    Message message = messageInfo.message;
+                    int messageTries = messageInfo.tries;
+                    if (messageTries == MAX_RETRIES) {
+                        this.logger.info("Message has not been acknowledged after 3 tries. Alerting truck.");
+                        this.truck.handleUnresponsiveReceiver(message);
+                    }
+                    if (messageTries < MAX_RETRIES && ChronoUnit.SECONDS.between(messageInfo.lastTry,
+                            LocalDateTime.now()) >= WAIT_BEFORE_TRY_SECONDS) {
+                        // Retry sending message
+                        message.getBody().put("retry", "true");
+                        int retryMessageId = this.sendMessageTo(
+                                SocketAddress.fromString(message.getBody().get("receiver")),
+                                message.getType(),
+                                (String[]) message.getBody().entrySet().stream()
+                                        .flatMap(e -> Stream.of(e.getKey(), e.getValue())).collect(Collectors.toList())
+                                        .toArray());
+                        messageInfo.incrementTries();
+                        messageInfo.addCorrespondingId(retryMessageId);
+                    }
+                }
             }
         } catch (IOException e) {
             System.err.println("Error starting server on port " + this.socketAddress.toString() + ": " + e.getMessage());
