@@ -3,17 +3,13 @@ package dps.platoon;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Map;
 import java.util.Map;
 
 import dps.GPSLocation;
 import dps.Message;
 import dps.truck.SocketAddress;
 import dps.truck.Truck;
-import dps.truck.TruckServer;
 import dps.truck.TruckServer;
 import dps.Utils;
 import dps.platoon.Platoon;
