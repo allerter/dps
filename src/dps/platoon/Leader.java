@@ -12,6 +12,7 @@ import dps.truck.SocketAddress;
 import dps.truck.Truck;
 import dps.truck.TruckServer;
 import dps.Utils;
+import dps.platoon.Platoon;
 
 public class Leader extends Truck implements PlatoonTruck {
 
@@ -66,7 +67,7 @@ public class Leader extends Truck implements PlatoonTruck {
         throw new UnsupportedOperationException("Unimplemented method");
     };
 
-    @Override
+    //@Override
     public void disconnect() {
         throw new UnsupportedOperationException("Unimplemented method");
     }
@@ -132,7 +133,7 @@ public class Leader extends Truck implements PlatoonTruck {
         LocalDateTime timeOfLastMessage = Utils.nowDateTime();
         while (true) {
             processReceivedMessages();
-            switch (truckState) {
+            switch (truckState) { 
                 case "discovery":
                     // Wait 5 seconds for other trucks to join
                     if (waitForJoin == 5 && joinedTrucksList.size() != 3) {

@@ -1,5 +1,9 @@
 package dps.platoon;
 
+import java.util.ArrayList;
+
+import dps.truck.Truck;
+
 public class Platoon {
     private Leader leader;
     private PrimeFollower primeFollower;
@@ -32,5 +36,17 @@ public class Platoon {
 
     public void setFollowers(Follower[] followers) {
         this.followers = followers;
+    }
+
+    public ArrayList<Truck> getTrucks() {
+        return null;
+    }
+
+    public boolean isEmpty() {
+        return false;
+    }
+
+    public char[] size() {
+        return null;
     }
 }
