@@ -25,6 +25,54 @@ public class TruckServer extends Thread {
     private Truck truck;
     LinkedBlockingQueue<Message> messageQueue = new LinkedBlockingQueue<>();
     AtomicInteger messageCounter = new AtomicInteger(0);
+    private ArrayList<UnacknowledgedMessage> unacknowledgedSentMessages = new ArrayList<>();
+
+    class UnacknowledgedMessage {
+        LocalDateTime lastTry;
+        Message message;
+        int tries = 1;
+        ArrayList<Integer> correspondingIdsList = new ArrayList<>();
+
+        public UnacknowledgedMessage(Message message, LocalDateTime lastTry) {
+            this.message = message;
+            this.lastTry = lastTry;
+            this.correspondingIdsList.add(message.getId());
+        }
+
+        @Override
+        public String toString() {
+            return String.format("Messages(%s) with %d tries, lastly at %s", 
+            this.correspondingIdsList.toString(),
+            this.tries,
+            this.lastTry.toString());
+        }
+
+        public Message getMessage() {
+            return message;
+        }
+
+        public int getTries() {
+            return tries;
+        }
+
+        public void incrementTries() {
+            this.tries++;
+        }
+
+        public LocalDateTime getLastTry() {
+            return lastTry;
+        }
+
+        public void setLastTry(LocalDateTime lastTry) {
+            this.lastTry = lastTry;
+        }
+        public ArrayList<Integer> getCorrespondingIdsList() {
+            return correspondingIdsList;
+        }
+        public void addCorrespondingId(int id) {
+            this.correspondingIdsList.add(id);
+        }
+    }
 
     public TruckServer(SocketAddress socketAddress) throws IOException {
         this.logger = Logger.getLogger(this.getClass().getSimpleName());
@@ -107,6 +155,10 @@ public class TruckServer extends Thread {
         Message message = new Message(this.incrementAndGetMessageCounter(), Utils.now(), messageType, fullArgs);
         try {
             TruckClient.sendMessage(socketAddress, message);
+            // If it's message's first try, only add it to the list of unacknowledged messages
+            if (message.getBody().get("retry") != "true"){
+                unacknowledgedSentMessages.add(new UnacknowledgedMessage(message, message.getUtc()));
+            }
         } catch (IOException e) {
             this.logger.severe("Error sending message: " + e.getMessage());
         }
