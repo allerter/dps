@@ -5,9 +5,14 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.management.RuntimeErrorException;
 
@@ -20,6 +25,8 @@ import dps.platoon.Platoon;
 import dps.platoon.PrimeFollower;
 
 public class TruckServer extends Thread {
+    final static int MAX_RETRIES = 3;
+    final static int WAIT_BEFORE_TRY_SECONDS = 2;
     private Logger logger;
     private SocketAddress socketAddress;
     private Truck truck;
