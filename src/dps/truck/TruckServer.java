@@ -48,10 +48,10 @@ public class TruckServer extends Thread {
 
         @Override
         public String toString() {
-            return String.format("Messages(%s) with %d tries, lastly at %s", 
-            this.correspondingIdsList.toString(),
-            this.tries,
-            this.lastTry.toString());
+            return String.format("Messages(%s) with %d tries, lastly at %s",
+                    this.correspondingIdsList.toString(),
+                    this.tries,
+                    this.lastTry.toString());
         }
 
         public Message getMessage() {
@@ -73,9 +73,11 @@ public class TruckServer extends Thread {
         public void setLastTry(LocalDateTime lastTry) {
             this.lastTry = lastTry;
         }
+
         public ArrayList<Integer> getCorrespondingIdsList() {
             return correspondingIdsList;
         }
+
         public void addCorrespondingId(int id) {
             this.correspondingIdsList.add(id);
         }
@@ -101,28 +103,27 @@ public class TruckServer extends Thread {
             while (!Thread.currentThread().isInterrupted()) {
                 try (Socket clientSocket = serverSocket.accept();
                         BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()))) {
-                            String line;
+                    String line;
 
-                            StringBuilder rStringBuilder = new StringBuilder();
-                            while ((line = in.readLine()) != null) {
-                               rStringBuilder.append(line);
-                            }
-                            Message receivedMessage = Message.fromJson(rStringBuilder.toString());
-                            
-                            // Check to see if received message acknowledges any sent messages
-                            // If it does, remove it from our unacknowledged messages
-                            int ackId = Integer.valueOf(receivedMessage.getBody().get("ack_id"));
-                            for (UnacknowledgedMessage messageInfo: unacknowledgedSentMessages){
-                                if (messageInfo.getCorrespondingIdsList().contains(ackId)){
-                                    unacknowledgedSentMessages.remove(messageInfo);
-                                    this.logger.fine(messageInfo.toString() + "was acknowledged.");
-                                    break;
-                                }
-                            }
-        
-                            this.addMessageToQueue(receivedMessage);
-                
+                    StringBuilder rStringBuilder = new StringBuilder();
+                    while ((line = in.readLine()) != null) {
+                        rStringBuilder.append(line);
                     }
+                    Message receivedMessage = Message.fromJson(rStringBuilder.toString());
+
+                    // Check to see if received message acknowledges any sent messages
+                    // If it does, remove it from our unacknowledged messages
+                    int ackId = Integer.valueOf(receivedMessage.getBody().get("ack_id"));
+                    for (UnacknowledgedMessage messageInfo : unacknowledgedSentMessages) {
+                        if (messageInfo.getCorrespondingIdsList().contains(ackId)) {
+                            unacknowledgedSentMessages.remove(messageInfo);
+                            this.logger.fine(messageInfo.toString() + "was acknowledged.");
+                            break;
+                        }
+                    }
+
+                    this.addMessageToQueue(receivedMessage);
+
                 } catch (JsonProcessingException e) {
                     System.out.println(e.getMessage());
                 } catch (IOException e) {
@@ -130,8 +131,8 @@ public class TruckServer extends Thread {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-                
-                if (!this.truck.isAlive()){
+
+                if (!this.truck.isAlive()) {
                     return;
                 }
 
@@ -159,9 +160,10 @@ public class TruckServer extends Thread {
                 }
             }
         } catch (IOException e) {
-            System.err.println("Error starting server on port " + this.socketAddress.toString() + ": " + e.getMessage());
+            System.err
+                    .println("Error starting server on port " + this.socketAddress.toString() + ": " + e.getMessage());
         }
-        
+
     }
 
     public int incrementAndGetMessageCounter() {
@@ -197,8 +199,9 @@ public class TruckServer extends Thread {
         Message message = new Message(this.incrementAndGetMessageCounter(), Utils.now(), messageType, fullArgs);
         try {
             TruckClient.sendMessage(socketAddress, message);
-            // If it's message's first try, only add it to the list of unacknowledged messages
-            if (message.getBody().get("retry") != "true"){
+            // If it's message's first try, only add it to the list of unacknowledged
+            // messages
+            if (message.getBody().get("retry") != "true") {
                 unacknowledgedSentMessages.add(new UnacknowledgedMessage(message, message.getUtc()));
             }
         } catch (IOException e) {
@@ -216,44 +219,44 @@ public class TruckServer extends Thread {
     }
 
     public void joinPlatoonAsFollower(SocketAddress leaderAddress) {
-        if (!(this.truck instanceof Truck)){
-            throw new RuntimeErrorException(null, "Truck joining platoon isn't of type Truck, but " + this.truck.getClass().getSimpleName());
+        if (!(this.truck instanceof Truck)) {
+            throw new RuntimeErrorException(null,
+                    "Truck joining platoon isn't of type Truck, but " + this.truck.getClass().getSimpleName());
         }
         this.finishCurrentTruck();
         try {
             this.truck = new Follower(
-                this.truck.getTruckId(),
-                this.truck.getDirection(), 
-                this.truck.getSpeed(),
-                this.truck.getDestination(), 
-                this.truck.getLocation(),
-                this,
-                leaderAddress
-                );
-                this.truck.start();
-            } catch (IOException e) {
+                    this.truck.getTruckId(),
+                    this.truck.getDirection(),
+                    this.truck.getSpeed(),
+                    this.truck.getDestination(),
+                    this.truck.getLocation(),
+                    this,
+                    leaderAddress);
+            this.truck.start();
+        } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }
 
     public void joinPlatoonAsPrimeFollower(SocketAddress leaderAddress, Platoon platoon) {
-        if (!(this.truck instanceof Truck)){
-            throw new RuntimeErrorException(null, "Truck joining platoon isn't of type Truck, but " + this.truck.getClass().getSimpleName());
+        if (!(this.truck instanceof Truck)) {
+            throw new RuntimeErrorException(null,
+                    "Truck joining platoon isn't of type Truck, but " + this.truck.getClass().getSimpleName());
         }
         this.finishCurrentTruck();
         try {
             this.truck = new PrimeFollower(
-                this.truck.getTruckId(),
-                this.truck.getDirection(), 
-                this.truck.getSpeed(),
-                this.truck.getDestination(), 
-                this.truck.getLocation(),
-                this,
-                platoon
-                );
-                this.truck.start();
-            } catch (IOException e) {
+                    this.truck.getTruckId(),
+                    this.truck.getDirection(),
+                    this.truck.getSpeed(),
+                    this.truck.getDestination(),
+                    this.truck.getLocation(),
+                    this,
+                    platoon);
+            this.truck.start();
+        } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
