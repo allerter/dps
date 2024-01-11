@@ -61,4 +61,8 @@ public class Follower extends Truck {
     public void run() {
         this.processReceivedMessages();
     }
+
+    public void handleUnresponsiveReceiver(Message message) {
+        throw new UnsupportedOperationException("Unimplemented method 'handleUnresponsiveReceiver'");
+    }
 }

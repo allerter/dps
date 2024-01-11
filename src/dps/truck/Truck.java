@@ -178,4 +178,7 @@ public class Truck extends Thread {
         this.setSpeed(newSpeed);
     }
 
+    public void handleUnresponsiveReceiver(Message message) {
+        truckState = "communication_lost";
+    }
 }

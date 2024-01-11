@@ -3,6 +3,7 @@ package dps.platoon;
 import java.io.IOException;
 
 import dps.GPSLocation;
+import dps.Message;
 import dps.truck.Truck;
 import dps.truck.TruckServer;
 
@@ -34,5 +35,9 @@ public class PrimeFollower extends Truck implements PlatoonTruck {
     public void discover() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'discover'");
+    }
+
+    public void handleUnresponsiveReceiver(Message message) {
+        throw new UnsupportedOperationException("Unimplemented method 'handleUnresponsiveReceiver'");
     }
 }
