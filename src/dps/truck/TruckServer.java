@@ -53,12 +53,16 @@ public class TruckServer extends Thread {
                                rStringBuilder.append(line);
                             }
                             String receivedMessage = rStringBuilder.toString();
+                            this.addMessageToQueue(Message.fromJson(receivedMessage));
                 
                 } catch (JsonProcessingException e) {
-                    System.out.println(e.getStackTrace().toString());
+                    System.out.println(e.getMessage());
                 } catch (IOException e) {
                     System.err.println("Error in communication with the client: " + e.getMessage());
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
+                
                 if (!this.truck.isAlive()){
                     return;
                 }
@@ -82,6 +86,7 @@ public class TruckServer extends Thread {
     }
 
     public void addMessageToQueue(Message message) {
+        this.logger.fine("New message added to queue.");
         this.messageQueue.add(message);
     }
 
