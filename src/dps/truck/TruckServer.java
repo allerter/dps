@@ -115,6 +115,7 @@ public class TruckServer extends Thread {
         
                             this.addMessageToQueue(receivedMessage);
                 
+                    }
                 } catch (JsonProcessingException e) {
                     System.out.println(e.getMessage());
                 } catch (IOException e) {
@@ -173,8 +174,7 @@ public class TruckServer extends Thread {
         this.messageQueue.add(message);
     }
 
-
-    public void sendMessageTo(SocketAddress socketAddress, String messageType, String... args) {
+    public int sendMessageTo(SocketAddress socketAddress, String messageType, String... args) {
         // Add basic info to message body
         String[] fullArgs = new String[args.length + 6];
         int counter = 0;
@@ -197,6 +197,7 @@ public class TruckServer extends Thread {
         } catch (IOException e) {
             this.logger.severe("Error sending message: " + e.getMessage());
         }
+        return message.getId();
     }
 
     public SocketAddress getSocketAddress() {
