@@ -93,15 +93,17 @@ public class TruckServer extends Thread {
 
     public void sendMessageTo(SocketAddress socketAddress, String messageType, String... args) {
         // Add basic info to message body
-        String[] fullArgs = new String[args.length + 4];
+        String[] fullArgs = new String[args.length + 6];
         int counter = 0;
-        for(String s : args) fullArgs[counter++] = s;
+        for (String s : args)
+            fullArgs[counter++] = s;
         fullArgs[counter] = "truck_id";
         fullArgs[counter + 1] = String.valueOf(this.truck.getTruckId());
         fullArgs[counter + 2] = "address";
         fullArgs[counter + 3] = this.getSocketAddress().toString();
+        fullArgs[counter + 4] = "receiver";
+        fullArgs[counter + 5] = socketAddress.toString();
 
-        
         Message message = new Message(this.incrementAndGetMessageCounter(), Utils.now(), messageType, fullArgs);
         try {
             TruckClient.sendMessage(socketAddress, message);
