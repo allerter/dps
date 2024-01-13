@@ -40,9 +40,7 @@ public class PrimeFollower extends Truck implements PlatoonTruck {
     private ArrayList<SocketAddress> platoonAddresses = new ArrayList<>();
     private TruckState truckState;
 
-    public PrimeFollower(int id, String direction, double speed, GPSLocation destination, GPSLocation location,
-            TruckServer server, Platoon platoon) throws IOException {
-        super(id, direction, speed, destination, location, server);
+
     public PrimeFollower(int id, String direction, double speed, GPSLocation destination, GPSLocation location,
             TruckServer server, Platoon platoon) throws IOException {
         super(id, direction, speed, destination, location, server);
