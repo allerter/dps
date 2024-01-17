@@ -159,5 +159,9 @@ public class Leader extends Truck implements PlatoonTruck{
             }
         }
     }
+
+    public void handleUnresponsiveReceiver(Message message) {
+        throw new UnsupportedOperationException("Unimplemented method 'handleUnresponsiveReceiver'");
+    }
 }
 

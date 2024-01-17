@@ -154,6 +154,10 @@ public class Truck extends Thread {
                         truckState = "discovery";
                     }
                     break;
+                case "communication_lost":
+                    this.logger.info("Communication is lost. Stopping.");
+                    this.changeSpeed(0);
+                    return;
                 case "join":
                     this.logger.info("Platoon found. Leaving Truck role.");
                     return;
@@ -178,4 +182,7 @@ public class Truck extends Thread {
         this.setSpeed(newSpeed);
     }
 
+    public void handleUnresponsiveReceiver(Message message) {
+        truckState = "communication_lost";
+    }
 }
