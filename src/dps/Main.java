@@ -56,18 +56,18 @@ public class Main {
         TruckServer[] truckCores = new TruckServer[3];
         try {
 
-            truckCores[0] = new TruckServer(new SocketAddress("127.0.0.1", 5001), map);
-            truckCores[1] = new TruckServer(new SocketAddress("127.0.0.1", 5002), map);
-            truckCores[2] = new TruckServer(new SocketAddress("127.0.0.1", 5003), map);
+            truckCores[0] = new TruckServer(1, 0.0, otherTruckLocations[0], destination, new SocketAddress("127.0.0.1", 5001), map);
+            truckCores[1] = new TruckServer(2, 0.0, otherTruckLocations[1], destination, new SocketAddress("127.0.0.1", 5002), map);
+            truckCores[2] = new TruckServer(3, 0.0, otherTruckLocations[2], destination, new SocketAddress("127.0.0.1", 5003), map);
         } catch (IOException e) {
             e.printStackTrace();
             return;
         }
 
         try {
-            truckCores[0].setTruck(new Truck(1, 0.0, otherTruckLocations[0], destination, truckCores[0]));
-            truckCores[1].setTruck(new Truck(2, 0.0, otherTruckLocations[1], destination, truckCores[1]));
-            truckCores[2].setTruck(new Truck(3, 0.0, otherTruckLocations[2], destination, truckCores[2]));
+            truckCores[0].setTruck(new Truck(truckCores[0]));
+            truckCores[1].setTruck(new Truck(truckCores[1]));
+            truckCores[2].setTruck(new Truck(truckCores[2]));
 
             for (TruckServer truckCore : truckCores) {
                 truckCore.start();
@@ -83,12 +83,8 @@ public class Main {
             for (int i = 0; i < truckCores.length; i++) {
                 trucksAddresses[i] = truckCores[i].getSocketAddress();
             }
-            TruckServer leaderCore = new TruckServer(new SocketAddress("127.0.0.1", 5000), map);
+            TruckServer leaderCore = new TruckServer(0, 0.0, leaderLocation, destination, new SocketAddress("127.0.0.1", 5000), map);
             leaderCore.setTruck(new Leader(
-                    0,
-                    0.0,
-                    leaderLocation,
-                    destination,
                     leaderCore,
                     trucksAddresses));
             leaderCore.start();

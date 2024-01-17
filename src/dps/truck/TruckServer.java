@@ -18,24 +18,37 @@ import javax.management.RuntimeErrorException;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
+import dps.CollisionSensor;
 import dps.Message;
 import dps.Utils;
 import dps.platoon.Follower;
 import dps.platoon.Platoon;
 import dps.platoon.PrimeFollower;
+import map.Direction;
 import map.GridMap;
+import map.Location;
 
 public class TruckServer extends Thread {
+    // Truck-related
+    private Truck truck;
+    private int truckId;
+    private double speed;
+    private TruckLocation location;
+    private Location destination;
+    private CollisionSensor collisionSensor;
+
+    // Network related
+    private SocketAddress socketAddress;
+    private LinkedBlockingQueue<Message> messageQueue = new LinkedBlockingQueue<>();
+    private AtomicInteger messageCounter = new AtomicInteger(0);
+    private ArrayList<UnacknowledgedMessage> unacknowledgedSentMessages = new ArrayList<>();
+
+    // General
     final static int MAX_RETRIES = 3;
     final static int WAIT_BEFORE_TRY_SECONDS = 2;
     private Logger logger;
-    private SocketAddress socketAddress;
-    private Truck truck;
-    LinkedBlockingQueue<Message> messageQueue = new LinkedBlockingQueue<>();
-    AtomicInteger messageCounter = new AtomicInteger(0);
-    private ArrayList<UnacknowledgedMessage> unacknowledgedSentMessages = new ArrayList<>();
     private GridMap map;
-
+    
     class UnacknowledgedMessage {
         LocalDateTime lastTry;
         Message message;
@@ -88,10 +101,50 @@ public class TruckServer extends Thread {
         }
     }
 
-    public TruckServer(SocketAddress socketAddress, GridMap map) throws IOException {
+    public TruckServer(
+        int id,
+        double speed,
+        TruckLocation location,
+        Location destination,
+        SocketAddress socketAddress,
+        GridMap map) throws IOException {
         this.logger = Logger.getLogger(this.getClass().getSimpleName());
+        this.truckId = id;
+        this.speed = speed;
+        this.location = location;
+        this.destination = destination;
         this.socketAddress = socketAddress;
         this.map = map;
+    }
+
+    public int getTruckId() {
+        return truckId;
+    }
+
+    public double getSpeed() {
+        return speed;
+    }
+
+    public void setSpeed(double speed) {
+        this.speed = speed;
+    }
+
+    public TruckLocation getLocation() {
+        return location;
+    }
+
+    public void setLocation(Location location) {
+        this.location.setRow(location.getRow());
+        this.location.setColumn(location.getColumn());
+    }
+
+
+    public Location getDestination() {
+        return destination;
+    }
+
+    public void setDestination(Location destination) {
+        this.destination = destination;
     }
 
     public void setTruck(Truck truck) {
@@ -101,6 +154,15 @@ public class TruckServer extends Thread {
 
     public Truck getTruck() {
         return truck;
+    }
+    public Direction getDirection(){
+        return this.location.getDirection();
+    }
+    public void setDirection(Direction direction){
+        this.location.setDirection(direction);
+    }
+    public Location getHeadLocation(){
+        return this.location.getHeadLocation();
     }
 
     @Override

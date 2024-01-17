@@ -2,15 +2,12 @@ package dps.platoon;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.lang.reflect.Array;
 
-import dps.GPSLocation;
 import dps.truck.Truck;
 import dps.truck.TruckLocation;
 import dps.truck.TruckServer;
 import map.Location;
 
-import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
@@ -18,15 +15,6 @@ import java.util.Map;
 
 import dps.Message;
 import dps.truck.SocketAddress;
-//import dps.truck.Truck;
-//import dps.truck.TruckServer;
-import dps.Utils;
-import dps.platoon.Leader;
-import java.util.logging.Logger;
-
-
-
-
 
 public class PrimeFollower extends Truck implements PlatoonTruck {
 
@@ -43,7 +31,7 @@ public class PrimeFollower extends Truck implements PlatoonTruck {
 
     public PrimeFollower(int id, double speed, TruckLocation location, Location destination,
             TruckServer server, Platoon platoon) throws IOException {
-        super(id, speed, location, destination, server);
+        super(server);
         this.platoon = platoon;
         this.platoonAddresses = new ArrayList<>();
         this.lastLeaderPingTime = LocalDateTime.now(); // Initialize last ping time

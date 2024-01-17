@@ -16,7 +16,7 @@ public class Follower extends Truck {
     SocketAddress leaderAddress;
 
     public Follower(int id, double speed, TruckLocation location, Location destination, TruckServer server, SocketAddress leaderAddress) throws IOException {
-        super(id, speed, location, destination, server);
+        super(server);
         this.leaderAddress = leaderAddress;
     }
 

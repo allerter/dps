@@ -4,36 +4,26 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.logging.Logger;
 
-import dps.CollisionSensor;
 import dps.Message;
 import dps.platoon.Platoon;
 import map.Direction;
 import map.Location;
 
 public class Truck extends Thread {
-    int truckId;
     protected String truckState;
     protected Logger logger;
-    double speed;
-    Location destination;
-    TruckLocation location;
-    CollisionSensor collisionSensor;
-
     protected TruckServer server;
+    
 
-    public Truck(int id, double speed, TruckLocation location, Location destination, TruckServer server) throws IOException {
+    public Truck(TruckServer server) throws IOException {
         this.logger = Logger.getLogger(this.getClass().getSimpleName());
         this.truckState = "roaming";
-        this.truckId = id;
-        this.speed = speed;
-        this.destination = destination;
-        this.location = location;
         this.server = server;
 
     }
 
     public int getTruckId() {
-        return truckId;
+        return this.server.getTruckId();
     }
 
     public String getTruckState() {
@@ -45,41 +35,39 @@ public class Truck extends Thread {
     }
 
     public Direction getDirection() {
-        return this.location.getDirection();
+        return this.server.getDirection();
     }
 
     public void setDirection(Direction direction) {
-        this.location.setDirection(direction);;
+        this.server.setDirection(direction);;
     }
 
     public Location getDestination() {
-        return destination;
+        return server.getDestination();
     }
 
     public void setDestination(Location destination) {
-        this.destination = destination;
+        this.server.setDestination(destination);;
     }
 
     public Location getLocation() {
-        return location.getHeadLocation();
+        return server.getHeadLocation();
     }
 
     public TruckLocation getDirectionLocation() {
-        // TODO Auto-generated method stub
-        return this.location;
+        return this.server.getLocation();
     }
 
     public void setLocation(Location location) {
-        this.location.setRow(location.getRow());
-        this.location.setColumn(location.getColumn());
+        this.server.setLocation(location);
     }
 
     public double getSpeed() {
-        return speed;
+        return server.getSpeed();
     }
 
     public void setSpeed(double speed) {
-        this.speed = speed;
+        server.setSpeed(speed);
     }
 
     public void processReceivedMessages() {

@@ -6,7 +6,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Map;
 
-import dps.GPSLocation;
 import dps.Message;
 import dps.truck.SocketAddress;
 import dps.truck.Truck;
@@ -34,13 +33,13 @@ public class Leader extends Truck implements PlatoonTruck{
         }
     }
 
-    public Leader(int id, double speed, TruckLocation location, Location destination, TruckServer server, SocketAddress[] otherTrucksSocketAddresses) throws IOException {
-        super(id, speed, location, destination, server);
+    public Leader(TruckServer server, SocketAddress[] otherTrucksSocketAddresses) throws IOException {
+        super(server);
         this.otherTrucksSocketAddresses = otherTrucksSocketAddresses;
     }
 
-    public Leader(int id, double speed, TruckLocation location, Location destination, TruckServer server, Platoon platoon) throws IOException {
-        super(id, speed, location, destination, server);
+    public Leader(TruckServer server, Platoon platoon) throws IOException {
+        super(server);
         this.platoon = platoon;
     }
 
