@@ -36,9 +36,8 @@ public class PrimeFollower extends Truck implements PlatoonTruck {
     private final int LEADER_COMMUNICATION_TIMEOUT = 20; // seconds
 
     private int leaderId;// current leader id
-    private socketAddress leaderAddress;
+    private SocketAddress leaderAddress;
     private ArrayList<SocketAddress> platoonAddresses = new ArrayList<>();
-    private TruckState truckState;
 
 
     public PrimeFollower(int id, String direction, double speed, GPSLocation destination, GPSLocation location,
