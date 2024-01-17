@@ -3,19 +3,20 @@ package dps.platoon;
 import java.io.IOException;
 import java.util.Map;
 
-import dps.GPSLocation;
 import dps.Message;
-import dps.Utils;
 import dps.truck.SocketAddress;
 import dps.truck.Truck;
+import dps.truck.TruckLocation;
 import dps.truck.TruckServer;
+import map.Direction;
+import map.Location;
 
 public class Follower extends Truck {
 
     SocketAddress leaderAddress;
 
-    public Follower(int id, String direction, double speed, GPSLocation destination, GPSLocation location, TruckServer server, SocketAddress leaderAddress) throws IOException {
-        super(id, direction, speed, destination, location, server);
+    public Follower(int id, double speed, TruckLocation location, Location destination, TruckServer server, SocketAddress leaderAddress) throws IOException {
+        super(id, speed, location, destination, server);
         this.leaderAddress = leaderAddress;
     }
 
@@ -45,7 +46,7 @@ public class Follower extends Truck {
                         this.changeSpeed(Integer.valueOf(messageBody.get("speed")));
                         this.logger.info("Adapted speed to leader's. New speed: " + this.getSpeed());
                     case "direction_change":
-                        this.changeDirection(messageBody.get("direction"));
+                        this.changeDirection(Direction.valueOf(messageBody.get("direction")));
                         this.logger.info("Adapted speed to leader's. New speed: " + this.getSpeed());
                     case "leader_change":
                         

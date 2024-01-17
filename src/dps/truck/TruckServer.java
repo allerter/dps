@@ -23,6 +23,7 @@ import dps.Utils;
 import dps.platoon.Follower;
 import dps.platoon.Platoon;
 import dps.platoon.PrimeFollower;
+import map.GridMap;
 
 public class TruckServer extends Thread {
     final static int MAX_RETRIES = 3;
@@ -33,6 +34,7 @@ public class TruckServer extends Thread {
     LinkedBlockingQueue<Message> messageQueue = new LinkedBlockingQueue<>();
     AtomicInteger messageCounter = new AtomicInteger(0);
     private ArrayList<UnacknowledgedMessage> unacknowledgedSentMessages = new ArrayList<>();
+    private GridMap map;
 
     class UnacknowledgedMessage {
         LocalDateTime lastTry;
@@ -86,9 +88,10 @@ public class TruckServer extends Thread {
         }
     }
 
-    public TruckServer(SocketAddress socketAddress) throws IOException {
+    public TruckServer(SocketAddress socketAddress, GridMap map) throws IOException {
         this.logger = Logger.getLogger(this.getClass().getSimpleName());
         this.socketAddress = socketAddress;
+        this.map = map;
     }
 
     public void setTruck(Truck truck) {
@@ -234,10 +237,9 @@ public class TruckServer extends Thread {
         try {
             this.truck = new Follower(
                     this.truck.getTruckId(),
-                    this.truck.getDirection(),
                     this.truck.getSpeed(),
+                    this.truck.getDirectionLocation(),
                     this.truck.getDestination(),
-                    this.truck.getLocation(),
                     this,
                     leaderAddress);
             this.truck.start();
@@ -256,10 +258,9 @@ public class TruckServer extends Thread {
         try {
             this.truck = new PrimeFollower(
                     this.truck.getTruckId(),
-                    this.truck.getDirection(),
                     this.truck.getSpeed(),
+                    this.truck.getDirectionLocation(),
                     this.truck.getDestination(),
-                    this.truck.getLocation(),
                     this,
                     platoon);
             this.truck.start();

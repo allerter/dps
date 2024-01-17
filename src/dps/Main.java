@@ -11,7 +11,11 @@ import java.util.logging.SimpleFormatter;
 import dps.platoon.Leader;
 import dps.truck.SocketAddress;
 import dps.truck.Truck;
+import dps.truck.TruckLocation;
 import dps.truck.TruckServer;
+import map.GridMap;
+import map.Location;
+import map.Direction;
 
 public class Main {
 
@@ -31,29 +35,39 @@ public class Main {
     public static void main(String[] args) {
         Logger logger = Logger.getLogger("main");
 
+        // Set up map
+        Location destination = new Location(0, 50);
+        GridMap map = new GridMap(100, 100);
+        TruckLocation leaderLocation = new TruckLocation(97, 50, Direction.NORTH);
+        TruckLocation[] otherTruckLocations= {
+            new TruckLocation(97, 48, Direction.NORTH),
+            new TruckLocation(97, 46, Direction.NORTH),
+            new TruckLocation(97, 52, Direction.NORTH)
+        };
+        // Add trucks to map
+        map.addTruck(0, leaderLocation);
+        for (int i = 1; i <= otherTruckLocations.length; i++) {
+            map.addTruck(i, otherTruckLocations[i - 1]);
+        }
+
+
         // initialize platoon:
         // 1 Leader, 1 Prime Follower, 2 Followers
         TruckServer[] truckCores = new TruckServer[3];
         try {
 
-            truckCores[0] = new TruckServer(new SocketAddress("127.0.0.1", 5001));
-            truckCores[1] = new TruckServer(new SocketAddress("127.0.0.1", 5002));
-            truckCores[2] = new TruckServer(new SocketAddress("127.0.0.1", 5003));
+            truckCores[0] = new TruckServer(new SocketAddress("127.0.0.1", 5001), map);
+            truckCores[1] = new TruckServer(new SocketAddress("127.0.0.1", 5002), map);
+            truckCores[2] = new TruckServer(new SocketAddress("127.0.0.1", 5003), map);
         } catch (IOException e) {
             e.printStackTrace();
             return;
         }
 
         try {
-
-            truckCores[0].setTruck(new Truck(1, "straight", 0, new GPSLocation(50.110924, 8.682127),
-                    new GPSLocation(50.5136, 7.4653), truckCores[0]));
-            truckCores[1].setTruck(new Truck(2, "straight", 0, new GPSLocation(50.110924, 8.682127),
-                    new GPSLocation(49.5136, 7.4653),
-                    truckCores[1]));
-            truckCores[2].setTruck(new Truck(3, "straight", 0, new GPSLocation(50.110924, 8.682127),
-                    new GPSLocation(48.5136, 7.4653),
-                    truckCores[2]));
+            truckCores[0].setTruck(new Truck(1, 0.0, otherTruckLocations[0], destination, truckCores[0]));
+            truckCores[1].setTruck(new Truck(2, 0.0, otherTruckLocations[1], destination, truckCores[1]));
+            truckCores[2].setTruck(new Truck(3, 0.0, otherTruckLocations[2], destination, truckCores[2]));
 
             for (TruckServer truckCore : truckCores) {
                 truckCore.start();
@@ -69,13 +83,12 @@ public class Main {
             for (int i = 0; i < truckCores.length; i++) {
                 trucksAddresses[i] = truckCores[i].getSocketAddress();
             }
-            TruckServer leaderCore = new TruckServer(new SocketAddress("127.0.0.1", 5000));
+            TruckServer leaderCore = new TruckServer(new SocketAddress("127.0.0.1", 5000), map);
             leaderCore.setTruck(new Leader(
                     0,
-                    "straight",
                     0.0,
-                    new GPSLocation(50.110924, 8.682127),
-                    new GPSLocation(51.5136, 7.4653),
+                    leaderLocation,
+                    destination,
                     leaderCore,
                     trucksAddresses));
             leaderCore.start();
@@ -87,13 +100,14 @@ public class Main {
             return;
         }
 
-        for (TruckServer truck : truckCores) {
-            try {
-                truck.join();
-            } catch (InterruptedException e) {
-                logger.severe(e.getStackTrace().toString());
-            }
+    while (true) {
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
         }
+        // map.printGrid();
     }
-
+    }
 }

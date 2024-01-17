@@ -5,29 +5,26 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 import dps.CollisionSensor;
-import dps.GPSLocation;
 import dps.Message;
 import dps.platoon.Platoon;
+import map.Direction;
+import map.Location;
 
 public class Truck extends Thread {
     int truckId;
     protected String truckState;
     protected Logger logger;
-    String direction;
     double speed;
-    GPSLocation destination;
-    GPSLocation location;
+    Location destination;
+    TruckLocation location;
     CollisionSensor collisionSensor;
 
     protected TruckServer server;
 
-    public Truck(int id, String direction, double speed, GPSLocation destination, GPSLocation location, TruckServer server) throws IOException {
+    public Truck(int id, double speed, TruckLocation location, Location destination, TruckServer server) throws IOException {
         this.logger = Logger.getLogger(this.getClass().getSimpleName());
-        // TODO: add that at the log message
-        // text is formatted like this: Truck # - {log_message}
         this.truckState = "roaming";
         this.truckId = id;
-        this.direction = direction;
         this.speed = speed;
         this.destination = destination;
         this.location = location;
@@ -47,28 +44,34 @@ public class Truck extends Thread {
         this.truckState = state;
     }
 
-    public String getDirection() {
-        return direction;
+    public Direction getDirection() {
+        return this.location.getDirection();
     }
 
-    public void setDirection(String direction) {
-        this.direction = direction;
+    public void setDirection(Direction direction) {
+        this.location.setDirection(direction);;
     }
 
-    public GPSLocation getDestination() {
+    public Location getDestination() {
         return destination;
     }
 
-    public void setDestination(GPSLocation destination) {
+    public void setDestination(Location destination) {
         this.destination = destination;
     }
 
-    public GPSLocation getLocation() {
-        return location;
+    public Location getLocation() {
+        return location.getHeadLocation();
     }
 
-    public void setLocation(GPSLocation location) {
-        this.location = location;
+    public TruckLocation getDirectionLocation() {
+        // TODO Auto-generated method stub
+        return this.location;
+    }
+
+    public void setLocation(Location location) {
+        this.location.setRow(location.getRow());
+        this.location.setColumn(location.getColumn());
     }
 
     public double getSpeed() {
@@ -96,7 +99,7 @@ public class Truck extends Thread {
                             leaderAddress,
                             "join",
                             "location",
-                            this.getLocation().toString());
+                            this.getDirectionLocation().toString());
                         truckState = "wait_for_role";
                         break;
                     case "new_role":
@@ -174,7 +177,7 @@ public class Truck extends Thread {
         }
     }
 
-    protected void changeDirection(String newDirection) {
+    protected void changeDirection(Direction newDirection) {
         this.setDirection(newDirection);
     }
 

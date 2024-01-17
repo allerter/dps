@@ -6,8 +6,9 @@ import java.lang.reflect.Array;
 
 import dps.GPSLocation;
 import dps.truck.Truck;
+import dps.truck.TruckLocation;
 import dps.truck.TruckServer;
-
+import map.Location;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
@@ -40,9 +41,9 @@ public class PrimeFollower extends Truck implements PlatoonTruck {
     private ArrayList<SocketAddress> platoonAddresses = new ArrayList<>();
 
 
-    public PrimeFollower(int id, String direction, double speed, GPSLocation destination, GPSLocation location,
+    public PrimeFollower(int id, double speed, TruckLocation location, Location destination,
             TruckServer server, Platoon platoon) throws IOException {
-        super(id, direction, speed, destination, location, server);
+        super(id, speed, location, destination, server);
         this.platoon = platoon;
         this.platoonAddresses = new ArrayList<>();
         this.lastLeaderPingTime = LocalDateTime.now(); // Initialize last ping time

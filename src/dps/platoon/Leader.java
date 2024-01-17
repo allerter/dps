@@ -10,7 +10,10 @@ import dps.GPSLocation;
 import dps.Message;
 import dps.truck.SocketAddress;
 import dps.truck.Truck;
+import dps.truck.TruckLocation;
 import dps.truck.TruckServer;
+import map.GridMap;
+import map.Location;
 import dps.Utils;
 
 public class Leader extends Truck implements PlatoonTruck{
@@ -21,20 +24,23 @@ public class Leader extends Truck implements PlatoonTruck{
     SocketAddress[] otherTrucksSocketAddresses;
 
     class PotentialFollowerInfo {
-        public PotentialFollowerInfo(int senderId, GPSLocation fromString, SocketAddress senderAddress) {
-        }
         int id;
-        GPSLocation location;
+        TruckLocation location;
         SocketAddress address;
+        public PotentialFollowerInfo(int senderId, TruckLocation location, SocketAddress senderAddress) {
+            this.id = senderId;
+            this.location = location;
+            this.address = senderAddress;
+        }
     }
 
-    public Leader(int id, String direction, double speed, GPSLocation destination, GPSLocation location, TruckServer server, SocketAddress[] otherTrucksSocketAddresses) throws IOException {
-        super(id, direction, speed, destination, location, server);
+    public Leader(int id, double speed, TruckLocation location, Location destination, TruckServer server, SocketAddress[] otherTrucksSocketAddresses) throws IOException {
+        super(id, speed, location, destination, server);
         this.otherTrucksSocketAddresses = otherTrucksSocketAddresses;
     }
 
-    public Leader(int id, String direction, double speed, GPSLocation destination, GPSLocation location, TruckServer server, Platoon platoon) throws IOException {
-        super(id, direction, speed, destination, location, server);
+    public Leader(int id, double speed, TruckLocation location, Location destination, TruckServer server, Platoon platoon) throws IOException {
+        super(id, speed, location, destination, server);
         this.platoon = platoon;
     }
 
@@ -82,7 +88,7 @@ public class Leader extends Truck implements PlatoonTruck{
                 int senderId = Integer.valueOf(messageBody.get("truck_id"));
                 switch (messageType) {
                     case "join":
-                        PotentialFollowerInfo newTruckInfo = new PotentialFollowerInfo(senderId, GPSLocation.fromString(messageBody.get("location")), senderAddress);
+                        PotentialFollowerInfo newTruckInfo = new PotentialFollowerInfo(senderId, TruckLocation.fromString(messageBody.get("location")), senderAddress);
                         this.assignRoleToNewTruck(newTruckInfo);
                     default:
                         break;
@@ -101,7 +107,7 @@ public class Leader extends Truck implements PlatoonTruck{
             // sort joined trucks based on distance to leader
             joinedTrucksList.sort(
                 (t1, t2) ->
-                (int) (Utils.distance(this.getLocation(), t1.location) - Utils.distance(this.getLocation(), t2.location)));
+                (int) (GridMap.calculateDistance(this.getLocation(), t1.location.getHeadLocation()) - GridMap.calculateDistance(this.getLocation(), t2.location.getHeadLocation())));
             PotentialFollowerInfo primeFollower = joinedTrucksList.remove(0);
             
             // closest truck is prime follower
