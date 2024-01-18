@@ -6,6 +6,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Map;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+
 import dps.Message;
 import dps.truck.SocketAddress;
 import dps.truck.Truck;
@@ -26,10 +28,12 @@ public class Leader extends Truck implements PlatoonTruck{
         int id;
         TruckLocation location;
         SocketAddress address;
-        public PotentialFollowerInfo(int senderId, TruckLocation location, SocketAddress senderAddress) {
+        Message originatingMessage;
+        public PotentialFollowerInfo(int senderId, TruckLocation location, SocketAddress senderAddress, Message originatingMessage) {
             this.id = senderId;
             this.location = location;
             this.address = senderAddress;
+            this.originatingMessage = originatingMessage;
         }
     }
 
@@ -48,7 +52,7 @@ public class Leader extends Truck implements PlatoonTruck{
         
         for (SocketAddress truckAddress : truckSocketAddresses) {
             this.logger.finer("Sending " + messageType + " message to " + truckAddress.toString());
-            this.server.sendMessageTo(truckAddress, messageType, args);
+            this.server.sendMessageTo(truckAddress, messageType, -1, args);
         }
     }
     
@@ -87,7 +91,7 @@ public class Leader extends Truck implements PlatoonTruck{
                 int senderId = Integer.valueOf(messageBody.get("truck_id"));
                 switch (messageType) {
                     case "join":
-                        PotentialFollowerInfo newTruckInfo = new PotentialFollowerInfo(senderId, TruckLocation.fromString(messageBody.get("location")), senderAddress);
+                        PotentialFollowerInfo newTruckInfo = new PotentialFollowerInfo(senderId, TruckLocation.fromString(messageBody.get("location")), senderAddress, message);
                         this.assignRoleToNewTruck(newTruckInfo);
                     default:
                         break;
@@ -98,7 +102,7 @@ public class Leader extends Truck implements PlatoonTruck{
 
     private void assignRoleToNewTruck(PotentialFollowerInfo newTruckInfo) {
         joinedTrucksList.add(newTruckInfo);
-        if (truckState != "journey" && orderedPlatoonSocketAddresses.size() < 3){
+        if (truckState != "journey" && joinedTrucksList.size() < 3){
             this.logger.info("Not enough trucks in platoon. Won't assign role to new truck until more arrive.");
         } else if (truckState == "journey") {
 
@@ -110,16 +114,43 @@ public class Leader extends Truck implements PlatoonTruck{
             PotentialFollowerInfo primeFollower = joinedTrucksList.remove(0);
             
             // closest truck is prime follower
-            this.sendMessageTo(primeFollower.address, "role", "role", "prime_follower");
+            this.platoon = new Platoon(
+                new PlatoonTruckInfo(this.getTruckId(), this.getSocketAddress()),
+                new PlatoonTruckInfo(primeFollower.id, primeFollower.address),
+                new PlatoonTruckInfo(joinedTrucksList.get(0).id, joinedTrucksList.get(0).address),
+                new PlatoonTruckInfo(joinedTrucksList.get(1).id, joinedTrucksList.get(1).address)
+            );
+            try {
+                this.sendMessageTo(
+                    primeFollower.address,
+                    "role",
+                    Integer.valueOf(primeFollower.originatingMessage.getBody().get("truck_id")),
+                    "role",
+                    "prime_follower",
+                    "platoon",
+                    platoon.toJson());
+            } catch (JsonProcessingException e) {
+                e.printStackTrace();
+            }
             
             for (PotentialFollowerInfo potentialFollowerInfo : joinedTrucksList) {
-                this.sendMessageTo(potentialFollowerInfo.address, "role", "role", "follower");
+                this.sendMessageTo(
+                    potentialFollowerInfo.address,
+                    "role",
+                    Integer.valueOf(potentialFollowerInfo.originatingMessage.getBody().get("truck_id")),
+                    "role",
+                    "follower");
             }
             truckState = "journey";
+            this.logger.info("Assigned roles to potential platoon trucks. Beginning journey");
         }
     }
 
     
+    private SocketAddress getSocketAddress() {
+        return server.getSocketAddress();
+    }
+
     @Override
     public void run() {
         logger.info("Beginning operation.");

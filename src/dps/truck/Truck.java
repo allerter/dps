@@ -86,6 +86,7 @@ public class Truck extends Thread {
                         this.sendMessageTo(
                             leaderAddress,
                             "join",
+                            message.getId(),
                             "location",
                             this.getDirectionLocation().toString());
                         truckState = "wait_for_role";
@@ -96,6 +97,7 @@ public class Truck extends Thread {
                             this.sendMessageTo(
                                 leaderAddress, 
                                 "acknowledge_role",
+                                message.getId(),
                                 "accepted_role",
                                 newRole);
                             if (newRole == "follower"){
@@ -118,8 +120,8 @@ public class Truck extends Thread {
         }
     };
 
-    protected void sendMessageTo(SocketAddress leaderAddress, String messageType, String... messageBody) {
-        this.server.sendMessageTo(leaderAddress, messageType, messageBody);
+    protected void sendMessageTo(SocketAddress leaderAddress, String messageType, int ackId, String... messageBody) {
+        this.server.sendMessageTo(leaderAddress, messageType, ackId, messageBody);
     }
 
     public void run() {

@@ -79,7 +79,7 @@ public class PrimeFollower extends Truck implements PlatoonTruck {
             // Logic to notify other trucks in the platoon about the leadership change
             for (SocketAddress memberAddress : platoonMembers) {
                 if (!memberAddress.equals(this.server.getSocketAddress())) {
-                    server.sendMessageTo(memberAddress, "new_leader", "leader_id", String.valueOf(this.getTruckId()));
+                    // server.sendMessageTo(memberAddress, "new_leader", "leader_id", String.valueOf(this.getTruckId()));
                 }
             }
             logger.info("Platoon notified of leadership change.");

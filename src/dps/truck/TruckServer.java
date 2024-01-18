@@ -181,14 +181,12 @@ public class TruckServer extends Thread {
 
                     // Check to see if received message acknowledges any sent messages
                     // If it does, remove it from our unacknowledged messages
-                    if (receivedMessage.getBody().get("ack_id") != null){
-                        int ackId = Integer.valueOf(receivedMessage.getBody().get("ack_id"));
-                        for (UnacknowledgedMessage messageInfo : unacknowledgedSentMessages) {
-                            if (messageInfo.getCorrespondingIdsList().contains(ackId)) {
-                                unacknowledgedSentMessages.remove(messageInfo);
-                                this.logger.fine(messageInfo.toString() + "was acknowledged.");
-                                break;
-                            }
+                    int ackId = receivedMessage.getAckId();
+                    for (UnacknowledgedMessage messageInfo : unacknowledgedSentMessages) {
+                        if (messageInfo.getCorrespondingIdsList().contains(ackId)) {
+                            unacknowledgedSentMessages.remove(messageInfo);
+                            this.logger.fine(messageInfo.toString() + " was acknowledged.");
+                            break;
                         }
                     }
 
@@ -223,6 +221,7 @@ public class TruckServer extends Thread {
                         int retryMessageId = this.sendMessageTo(
                                 receiver,
                                 message.getType(),
+                                message.getAckId(),
                                 (String[]) message.getBody().entrySet().stream()
                                         .flatMap(e -> Stream.of(e.getKey(), e.getValue())).collect(Collectors.toList())
                                         .toArray());
@@ -255,7 +254,7 @@ public class TruckServer extends Thread {
         this.messageQueue.add(message);
     }
 
-    public int sendMessageTo(SocketAddress socketAddress, String messageType, String... args) {
+    public int sendMessageTo(SocketAddress socketAddress, String messageType, int ackId, String... args) {
         // Add basic info to message body
         String[] fullArgs = new String[args.length + 6];
         int counter = 0;
@@ -268,7 +267,7 @@ public class TruckServer extends Thread {
         fullArgs[counter + 4] = "receiver";
         fullArgs[counter + 5] = socketAddress.toString();
 
-        Message message = new Message(this.incrementAndGetMessageCounter(), Utils.now(), messageType, fullArgs);
+        Message message = new Message(this.incrementAndGetMessageCounter(), Utils.now(), messageType, ackId, fullArgs);
         try {
             TruckClient.sendMessage(socketAddress, message);
             // If it's message's first try, only add it to the list of unacknowledged
