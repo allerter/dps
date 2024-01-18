@@ -91,16 +91,16 @@ public class Truck extends Thread {
                             this.getDirectionLocation().toString());
                         truckState = "wait_for_role";
                         break;
-                    case "new_role":
+                    case "role":
                         String newRole = messageBody.get("role"); 
-                        if (newRole == "follower" || newRole == "prime_follower"){
+                        if (newRole.equals("follower") || newRole.equals("prime_follower")){
                             this.sendMessageTo(
                                 leaderAddress, 
                                 "acknowledge_role",
                                 message.getId(),
                                 "accepted_role",
                                 newRole);
-                            if (newRole == "follower"){
+                            if (newRole.equals("follower")){
                                 this.server.joinPlatoonAsFollower(leaderAddress);
                             } else {
                                 
