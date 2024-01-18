@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.logging.Logger;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+
 import dps.Message;
 import dps.platoon.Platoon;
 import map.Direction;
@@ -103,10 +105,13 @@ public class Truck extends Thread {
                             if (newRole.equals("follower")){
                                 this.server.joinPlatoonAsFollower(leaderAddress);
                             } else {
-                                
-                                Platoon platoon = Platoon.fromJson(messageBody.get("platoon"));
-
-                                this.server.joinPlatoonAsPrimeFollower(leaderAddress, platoon);
+                                try {
+                                    Platoon platoon = Platoon.fromJson(messageBody.get("platoon"));
+                                    this.server.joinPlatoonAsPrimeFollower(leaderAddress, platoon);
+                                } catch (JsonProcessingException e) {
+                                    // TODO Auto-generated catch block
+                                    e.printStackTrace();
+                                }
                             }
                             truckState = "join";
                         } else {
