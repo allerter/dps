@@ -19,6 +19,5 @@ public class TruckClient {
         } catch (IOException e) {
             System.err.println("Couldn't get I/O for the connection to " + socketAddress.toString());
         }
-        Logger.getLogger("comms").fine("Sent message to " + socketAddress.toString());
     }
 }
