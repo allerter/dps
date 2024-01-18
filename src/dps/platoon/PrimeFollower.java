@@ -27,14 +27,16 @@ public class PrimeFollower extends Truck implements PlatoonTruck {
     private int leaderId;// current leader id
     private SocketAddress leaderAddress;
     private ArrayList<SocketAddress> platoonAddresses = new ArrayList<>();
+    int leaderSpeed;
+    TruckLocation leaderTruckLocation; 
 
 
-    public PrimeFollower(int id, double speed, TruckLocation location, Location destination,
-            TruckServer server, Platoon platoon) throws IOException {
+    public PrimeFollower(TruckServer server, int leaderSpeed, TruckLocation leaderTruckLocation, Platoon platoon) throws IOException {
         super(server);
         this.platoon = platoon;
         this.platoonAddresses = new ArrayList<>();
-        this.lastLeaderPingTime = LocalDateTime.now(); // Initialize last ping time
+        this.leaderSpeed = leaderSpeed;
+        this.leaderTruckLocation = leaderTruckLocation;
     }
 
 
@@ -47,14 +49,20 @@ public class PrimeFollower extends Truck implements PlatoonTruck {
             while (true) {
                 processReceivedMessages();
     
+                // Adjust speed to match leader's
+                int currentSpeed = this.getSpeed();
+                if (currentSpeed < leaderSpeed){
+                    this.increaseSpeed(leaderSpeed - currentSpeed);
+                } else if (currentSpeed > leaderSpeed){
+                    this.reduceSpeed(currentSpeed - leaderSpeed);
+                }
                 // Check if leader is still in communication
-                if (lastLeaderPingTime != null &&
-                        ChronoUnit.SECONDS.between(lastLeaderPingTime,
+                if (ChronoUnit.SECONDS.between(this.server.getTimeOfLastMessage(),
                                 LocalDateTime.now()) > LEADER_COMMUNICATION_TIMEOUT) {
                     //leader is no longer in communication
                     assumeLeadership();
                 }
-    
+                this.logger.info("Processed messages as " + this.getClass().getSimpleName() + ". Sleeping for 1 sec.");
                 try {
                     Thread.sleep(1000); // Sleep for a while before next cycle
                 } catch (InterruptedException e) {
@@ -69,6 +77,16 @@ public class PrimeFollower extends Truck implements PlatoonTruck {
         }
         
     
+        private void reduceSpeed(int i) {
+        this.server.setSpeed(i);
+    }
+        private void increaseSpeed(int i) {
+        this.server.setSpeed(i);
+    }
+
+
+
+
         private void assumeLeadership() {
             logger.info("Assuming leadership role.");
             this.truckState = "Leader";
@@ -121,10 +139,10 @@ public class PrimeFollower extends Truck implements PlatoonTruck {
                 Map<String, String> messageBody = message.getBody();
 
                 switch (messageType) {
-                    case "leader_ping":
-                        // Update the last time we heard from the leader
-                        this.lastLeaderPingTime = LocalDateTime.now();
-                        break;
+                    case "disconnect":
+                        truckState = "replace_leader";
+                    case "new_speed":
+                        leaderSpeed = Integer.valueOf(messageBody.get("speed"));
                     case "platoon_update":
                         // Update platoon members list
                         updatePlatoonMembers(messageBody.get("platoon_members"));

@@ -80,7 +80,7 @@ public class Platoon {
         socketAddresses.add(primeFollower.socketAddress);
         socketAddresses.add(follower1.socketAddress);
         socketAddresses.add(follower2.socketAddress);
-        return (SocketAddress[]) socketAddresses.toArray();
+        return socketAddresses.toArray(new SocketAddress[socketAddresses.size()]);
     }
 
     @Override

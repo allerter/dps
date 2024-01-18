@@ -1,6 +1,7 @@
 package dps.truck;
 
 import java.io.IOException;
+import java.net.Socket;
 import java.util.Map;
 import java.util.logging.Logger;
 
@@ -15,7 +16,7 @@ public class Truck extends Thread {
     protected String truckState;
     protected Logger logger;
     protected TruckServer server;
-    
+    protected Message referenceMessage;
 
     public Truck(TruckServer server) throws IOException {
         this.logger = server.getLogger();
@@ -64,11 +65,11 @@ public class Truck extends Thread {
         this.server.setLocation(location);
     }
 
-    public double getSpeed() {
+    public int getSpeed() {
         return server.getSpeed();
     }
 
-    public void setSpeed(double speed) {
+    public void setSpeed(int speed) {
         server.setSpeed(speed);
     }
 
@@ -103,17 +104,11 @@ public class Truck extends Thread {
                                 "accepted_role",
                                 newRole);
                             if (newRole.equals("follower")){
-                                this.server.joinPlatoonAsFollower(leaderAddress);
+                                truckState = "join_as_follower";
                             } else {
-                                try {
-                                    Platoon platoon = Platoon.fromJson(messageBody.get("platoon"));
-                                    this.server.joinPlatoonAsPrimeFollower(leaderAddress, platoon);
-                                } catch (JsonProcessingException e) {
-                                    // TODO Auto-generated catch block
-                                    e.printStackTrace();
-                                }
+                                truckState = "join_as_prime_follower";
                             }
-                            truckState = "join";
+                            referenceMessage = message;
                         } else {
                             this.logger.warning("Unknown role provided by potential leader. Ignoring.");
                         }
@@ -132,9 +127,9 @@ public class Truck extends Thread {
     public void run() {
         int waitForJoin = 0;
         int waitForRole = 0;
+        truckState = "discovery";
         while (true) {
             processReceivedMessages();
-            truckState = "discovery";
             switch (truckState) {
                 case "discovery":
                     if (waitForJoin > 4){
@@ -156,13 +151,14 @@ public class Truck extends Thread {
                     this.logger.info("Communication is lost. Stopping.");
                     this.changeSpeed(0);
                     return;
-                case "join":
+                case "join_as_follower":
+                case "join_as_prime_follower":
                     this.logger.info("Platoon found. Leaving Truck role.");
                     return;
                 default:
                     break;
             }
-            this.logger.info("Processed messages. Sleeping for 1 sec.");
+            this.logger.info("Processed messages as " + this.getClass().getSimpleName() + ". Sleeping for 1 sec.");
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
@@ -176,7 +172,7 @@ public class Truck extends Thread {
         this.setDirection(newDirection);
     }
 
-    protected void changeSpeed(double newSpeed) {
+    protected void changeSpeed(int newSpeed) {
         this.setSpeed(newSpeed);
     }
 

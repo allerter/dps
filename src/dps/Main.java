@@ -1,6 +1,8 @@
 package dps;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Handler;
 import java.util.logging.Level;
@@ -15,6 +17,7 @@ import dps.truck.TruckLocation;
 import dps.truck.TruckServer;
 import map.GridMap;
 import map.Location;
+import map.TruckInfo;
 import map.Direction;
 
 public class Main {
@@ -53,21 +56,21 @@ public class Main {
 
         // initialize platoon:
         // 1 Leader, 1 Prime Follower, 2 Followers
-        TruckServer[] truckCores = new TruckServer[3];
+        ArrayList<TruckServer> truckCores = new ArrayList<>();
         try {
 
-            truckCores[0] = new TruckServer(1, 0.0, otherTruckLocations[0], destination, new SocketAddress("127.0.0.1", 5001), map);
-            truckCores[1] = new TruckServer(2, 0.0, otherTruckLocations[1], destination, new SocketAddress("127.0.0.1", 5002), map);
-            truckCores[2] = new TruckServer(3, 0.0, otherTruckLocations[2], destination, new SocketAddress("127.0.0.1", 5003), map);
+            truckCores.add(new TruckServer(1, 0, otherTruckLocations[0], destination, new SocketAddress("127.0.0.1", 5001), map));
+            truckCores.add(new TruckServer(2, 0, otherTruckLocations[1], destination, new SocketAddress("127.0.0.1", 5002), map));
+            truckCores.add(new TruckServer(3, 0, otherTruckLocations[2], destination, new SocketAddress("127.0.0.1", 5003), map));
         } catch (IOException e) {
             e.printStackTrace();
             return;
         }
 
         try {
-            truckCores[0].setTruck(new Truck(truckCores[0]));
-            truckCores[1].setTruck(new Truck(truckCores[1]));
-            truckCores[2].setTruck(new Truck(truckCores[2]));
+            truckCores.get(0).setTruck(new Truck(truckCores.get(0)));
+            truckCores.get(1).setTruck(new Truck(truckCores.get(1)));
+            truckCores.get(2).setTruck(new Truck(truckCores.get(2)));
 
             for (TruckServer truckCore : truckCores) {
                 truckCore.start();
@@ -78,12 +81,13 @@ public class Main {
             return;
         }
 
+        TruckServer leaderCore;
         try {
-            SocketAddress[] trucksAddresses = new SocketAddress[truckCores.length];
-            for (int i = 0; i < truckCores.length; i++) {
-                trucksAddresses[i] = truckCores[i].getSocketAddress();
+            SocketAddress[] trucksAddresses = new SocketAddress[truckCores.size()];
+            for (int i = 0; i < truckCores.size(); i++) {
+                trucksAddresses[i] = truckCores.get(i).getSocketAddress();
             }
-            TruckServer leaderCore = new TruckServer(0, 0.0, leaderLocation, destination, new SocketAddress("127.0.0.1", 5000), map);
+            leaderCore = new TruckServer(0, 0, leaderLocation, destination, new SocketAddress("127.0.0.1", 5000), map);
             leaderCore.setTruck(new Leader(
                     leaderCore,
                     trucksAddresses));
@@ -95,15 +99,26 @@ public class Main {
             e.printStackTrace();
             return;
         }
+        truckCores.add(0, leaderCore);
 
     while (true) {
+        // Create HashMaps and add entries for direction and speed
+        List<TruckInfo> directionAndSpeedList = new ArrayList<>();
+        for (TruckServer truckCore : truckCores) {
+            TruckInfo entry = new TruckInfo(truckCore.getTruckId(), truckCore.getDirection(), truckCore.getSpeed());
+            directionAndSpeedList.add(entry);
+        }
+
         try {
+            map.update(directionAndSpeedList.toArray(new TruckInfo[directionAndSpeedList.size()]));
             Thread.sleep(1000);
         } catch (InterruptedException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
         // map.printGrid();
+        // hi have a good day
     }
     }
+
 }

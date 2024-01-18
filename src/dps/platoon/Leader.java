@@ -1,7 +1,6 @@
 package dps.platoon;
 
 import java.io.IOException;
-import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Map;
@@ -14,12 +13,12 @@ import dps.truck.Truck;
 import dps.truck.TruckLocation;
 import dps.truck.TruckServer;
 import map.GridMap;
-import map.Location;
 import dps.Utils;
 
 public class Leader extends Truck implements PlatoonTruck{
 
-    private ArrayList<SocketAddress> orderedPlatoonSocketAddresses = new ArrayList<>();
+    int WAIT_BEFORE_PING = 10;
+    int JOURNEY_SPEED = 2;
     Platoon platoon;
     ArrayList<PotentialFollowerInfo> joinedTrucksList = new ArrayList<>();
     SocketAddress[] otherTrucksSocketAddresses;
@@ -48,10 +47,7 @@ public class Leader extends Truck implements PlatoonTruck{
     }
 
     public void broadcast(SocketAddress[] truckSocketAddresses, String messageType, String... args){
-        this.logger.info("Sending discovery message to trucks.");
-        
         for (SocketAddress truckAddress : truckSocketAddresses) {
-            this.logger.finer("Sending " + messageType + " message to " + truckAddress.toString());
             this.server.sendMessageTo(truckAddress, messageType, -1, args);
         }
     }
@@ -138,6 +134,9 @@ public class Leader extends Truck implements PlatoonTruck{
                     potentialFollowerInfo.address,
                     "role",
                     Integer.valueOf(potentialFollowerInfo.originatingMessage.getBody().get("truck_id")),
+                    "speed",
+                    String.valueOf(this.getSpeed()),
+                    "location",
                     "role",
                     "follower");
             }
@@ -162,7 +161,6 @@ public class Leader extends Truck implements PlatoonTruck{
 
         int waitForJoin = 0;
         truckState = "discovery";
-        LocalDateTime timeOfLastMessage = Utils.nowDateTime();
         while (true) {
             processReceivedMessages();
             switch (truckState) {
@@ -178,22 +176,27 @@ public class Leader extends Truck implements PlatoonTruck{
                     waitForJoin++;
                     break;          
                 case "journey":
-                    if (ChronoUnit.SECONDS.between(timeOfLastMessage, Utils.nowDateTime()) >= 5){
+                // Ping platoon trucks if it has been 5 seconds since last message exchange    
+                if (ChronoUnit.SECONDS.between(this.server.getTimeOfLastMessage(), Utils.nowDateTime()) >= WAIT_BEFORE_PING){
+                        this.logger.info("Pinging followers");
                         this.broadcast(platoon.getSocketAddresses(), "ping");
+                    }
+                    if (this.getSpeed() != JOURNEY_SPEED){
+                        this.increase_speed(JOURNEY_SPEED);
                     }
                     this.logger.info("Moving to destination at speed " + this.getSpeed());
                     break;
-                    
-                    default:
+                default:
                     this.logger.severe("Truck in unknown truckState: " + truckState);
                     break;
             }
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                logger.severe(e.getStackTrace().toString());
-            }
+            this.logger.info("Processed messages as " + this.getClass().getSimpleName() + ". Sleeping for 1 sec.");
         }
+    }
+
+    private void increase_speed(int newSpeed) {
+        this.server.setSpeed(newSpeed);
+        this.broadcast(platoon.getSocketAddresses(), "new_speed", "speed", String.valueOf(this.getSpeed()));
     }
 
     public void handleUnresponsiveReceiver(Message message) {

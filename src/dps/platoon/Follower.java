@@ -14,10 +14,16 @@ import map.Location;
 public class Follower extends Truck {
 
     SocketAddress leaderAddress;
+    int leaderSpeed;
+    TruckLocation leaderTruckLocation;
+    int optimalDistanceToLeader;
 
-    public Follower(int id, double speed, TruckLocation location, Location destination, TruckServer server, SocketAddress leaderAddress) throws IOException {
+    public Follower(TruckServer server, SocketAddress leaderAddress, int leaderSpeed, TruckLocation leaderTruckLocation, int optimalDistanceToLeader) throws IOException {
         super(server);
         this.leaderAddress = leaderAddress;
+        this.leaderSpeed = leaderSpeed;
+        this.leaderTruckLocation = leaderTruckLocation;
+        this.optimalDistanceToLeader = optimalDistanceToLeader;
     }
 
     public void sendMessageToLeader(Message m){
@@ -42,14 +48,16 @@ public class Follower extends Truck {
                     case "discovery":
                         this.logger.info("Discovery message received. Discarding.");    
                         break;
-                    case "speed_change":
-                        this.changeSpeed(Integer.valueOf(messageBody.get("speed")));
+                    case "new_speed":
+                        leaderSpeed = Integer.valueOf(messageBody.get("speed"));
                         this.logger.info("Adapted speed to leader's. New speed: " + this.getSpeed());
+                        break;
                     case "direction_change":
                         this.changeDirection(Direction.valueOf(messageBody.get("direction")));
                         this.logger.info("Adapted speed to leader's. New speed: " + this.getSpeed());
+                        break;
                     case "leader_change":
-                        
+                        throw new IllegalArgumentException("leader_change not implemented.");  
                     default:
                         this.logger.warning("Unknown message type: " + messageType + ". Ignoring.");
                     
@@ -60,7 +68,48 @@ public class Follower extends Truck {
 
     @Override
     public void run() {
-        this.processReceivedMessages();
+        this.logger.info("Started follower");
+        while (true) {
+            this.processReceivedMessages();
+            Location leaderLocation = leaderTruckLocation.getHeadLocation();
+            Location truckLocation = this.getLocation();
+
+            // Adjust speed to match leader's
+            int currentSpeed = this.getSpeed();
+            if (currentSpeed < leaderSpeed){
+                this.increaseSpeed(leaderSpeed - currentSpeed);
+            } else if (currentSpeed > leaderSpeed){
+                this.reduceSpeed(currentSpeed - leaderSpeed);
+            }
+            
+            // Adjust direction to match leader's column
+            int columnDifference = leaderLocation.getColumn() - truckLocation.getColumn();
+            if (columnDifference > 0){
+                this.server.setDirection(Direction.NORTH_EAST);
+            } else if (columnDifference < 0){
+                this.server.setDirection(Direction.NORTH_WEST);
+            }
+
+            // Adjust position to match optimal distance
+            int rowDifference = leaderLocation.getRow() - truckLocation.getRow();
+            if (rowDifference < optimalDistanceToLeader){
+                this.reduceSpeed(rowDifference);
+            } else if (rowDifference > optimalDistanceToLeader){
+                this.increaseSpeed(rowDifference);
+            }
+
+
+
+            this.logger.info("Processed messages as " + this.getClass().getSimpleName() + ". Sleeping for 1 sec.");          
+        }
+    }
+
+    private void reduceSpeed(int newSpeed) {
+        this.server.setSpeed(newSpeed);
+    }
+
+    private void increaseSpeed(int newSpeed) {
+        this.server.setSpeed(newSpeed);
     }
 
     public void handleUnresponsiveReceiver(Message message) {
