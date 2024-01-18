@@ -16,7 +16,7 @@ public class Truck extends Thread {
     
 
     public Truck(TruckServer server) throws IOException {
-        this.logger = Logger.getLogger(this.getClass().getSimpleName());
+        this.logger = server.getLogger();
         this.truckState = "roaming";
         this.server = server;
 
