@@ -108,8 +108,8 @@ public class TruckServer extends Thread {
         Location destination,
         SocketAddress socketAddress,
         GridMap map) throws IOException {
-        this.logger = Logger.getLogger(this.getClass().getSimpleName());
         this.truckId = id;
+        this.logger = Logger.getLogger(this.toString());
         this.speed = speed;
         this.location = location;
         this.destination = destination;
@@ -163,6 +163,15 @@ public class TruckServer extends Thread {
     }
     public Location getHeadLocation(){
         return this.location.getHeadLocation();
+    }
+
+    public Logger getLogger() {
+        return logger;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("Truck %d", this.truckId);
     }
 
     @Override
@@ -275,6 +284,7 @@ public class TruckServer extends Thread {
             if (message.getBody().get("retry") != "true") {
                 unacknowledgedSentMessages.add(new UnacknowledgedMessage(message, message.getUtc()));
             }
+            this.logger.finer("Sent message to " + socketAddress.toString());
         } catch (IOException e) {
             this.logger.severe("Error sending message: " + e.getMessage());
         }
@@ -290,6 +300,7 @@ public class TruckServer extends Thread {
     }
 
     public void joinPlatoonAsFollower(SocketAddress leaderAddress) {
+        this.logger.info("Joining platoon as follower");
         if (!(this.truck instanceof Truck)) {
             throw new RuntimeErrorException(null,
                     "Truck joining platoon isn't of type Truck, but " + this.truck.getClass().getSimpleName());
@@ -311,6 +322,7 @@ public class TruckServer extends Thread {
     }
 
     public void joinPlatoonAsPrimeFollower(SocketAddress leaderAddress, Platoon platoon) {
+        this.logger.info("Joining platoon as prime follower");
         if (!(this.truck instanceof Truck)) {
             throw new RuntimeErrorException(null,
                     "Truck joining platoon isn't of type Truck, but " + this.truck.getClass().getSimpleName());
