@@ -179,7 +179,7 @@ public class Leader extends Truck implements PlatoonTruck{
             switch (truckState) {
                 case "discovery":
                     // Wait 5 seconds for other trucks to join
-                    if (waitForJoin == 5 && joinedTrucksList.size() != 3) {
+                    if (waitForJoin == 50 && joinedTrucksList.size() != 3) {
                         logger.info("Discovery unsuccessful. Trucked joined: " + joinedTrucksList.size());
                         truckState = "roaming";
                     // All trucks join. Start the journey
@@ -203,7 +203,12 @@ public class Leader extends Truck implements PlatoonTruck{
                     this.logger.severe("Truck in unknown truckState: " + truckState);
                     break;
             }
-            this.logger.info("Processed messages as " + this.getClass().getSimpleName() + ". Sleeping for 1 sec.");
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
         }
     }
 
