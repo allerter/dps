@@ -127,7 +127,17 @@ public class TruckServer extends Thread {
     }
 
     public TruckLocation getLocation() {
+        int[] currentLocation = map.findElement("H" + this.truckId);
+        location.setRow(currentLocation[0]);
+        location.setColumn(currentLocation[1]);
         return location;
+    }
+
+    public Location getHeadLocation(){
+        int[] currentLocation = map.findElement("H" + this.truckId);
+        location.setRow(currentLocation[0]);
+        location.setColumn(currentLocation[1]);
+        return location.getHeadLocation();
     }
 
     public void setLocation(Location location) {
@@ -157,9 +167,6 @@ public class TruckServer extends Thread {
     }
     public void setDirection(Direction direction){
         this.location.setDirection(direction);
-    }
-    public Location getHeadLocation(){
-        return this.location.getHeadLocation();
     }
 
     public Logger getLogger() {
@@ -218,10 +225,15 @@ public class TruckServer extends Thread {
                     }
                 }
 
+                Thread.sleep(1000);
+
             }
         } catch (IOException e) {
             System.err
                     .println("Error starting server on port " + this.socketAddress.toString() + ": " + e.getMessage());
+        } catch (InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
         }
 
     }
