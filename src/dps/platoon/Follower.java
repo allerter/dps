@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.util.Map;
 
 import dps.Message;
+import dps.Utils;
+import dps.truck.DatedTruckLocation;
 import dps.truck.SocketAddress;
 import dps.truck.Truck;
 import dps.truck.TruckLocation;
@@ -15,10 +17,10 @@ public class Follower extends Truck {
 
     SocketAddress leaderAddress;
     int leaderSpeed;
-    TruckLocation leaderTruckLocation;
+    DatedTruckLocation leaderTruckLocation;
     int optimalDistanceToLeader;
 
-    public Follower(TruckServer server, SocketAddress leaderAddress, int leaderSpeed, TruckLocation leaderTruckLocation, int optimalDistanceToLeader) throws IOException {
+    public Follower(TruckServer server, SocketAddress leaderAddress, int leaderSpeed, DatedTruckLocation leaderTruckLocation, int optimalDistanceToLeader) throws IOException {
         super(server);
         this.leaderAddress = leaderAddress;
         this.leaderSpeed = leaderSpeed;
@@ -50,7 +52,8 @@ public class Follower extends Truck {
                         break;
                     case "new_speed":
                         leaderSpeed = Integer.valueOf(messageBody.get("speed"));
-                        this.logger.info("Adapted speed to leader's. New speed: " + this.getSpeed());
+                        leaderTruckLocation = DatedTruckLocation.fromString(messageBody.get("truck_location"));
+                        this.logger.info("Adapted speed to leader's. New speed: " + this.getSpeed() + ", Location: " + leaderTruckLocation.toString());
                         break;
                     case "direction_change":
                         this.changeDirection(Direction.valueOf(messageBody.get("direction")));
