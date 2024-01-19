@@ -17,6 +17,7 @@ import dps.Utils;
 
 public class Leader extends Truck implements PlatoonTruck{
 
+    int DISTANCE_BETWEEN_TRUCKS = 2;
     int WAIT_BEFORE_PING = 10;
     int JOURNEY_SPEED = 2;
     Platoon platoon;
@@ -124,11 +125,18 @@ public class Leader extends Truck implements PlatoonTruck{
                     "role",
                     "prime_follower",
                     "platoon",
-                    platoon.toJson());
+                    platoon.toJson(),
+                    "speed",
+                    String.valueOf(this.getSpeed()),
+                    "truck_location",
+                    String.valueOf(this.getDirectionLocation()));
+                    ;
             } catch (JsonProcessingException e) {
                 e.printStackTrace();
             }
             
+            // Optimal distance = between distance + prime follower length + between distance
+            int optimalDistanceToLeader = DISTANCE_BETWEEN_TRUCKS + 3 + DISTANCE_BETWEEN_TRUCKS; 
             for (PotentialFollowerInfo potentialFollowerInfo : joinedTrucksList) {
                 this.sendMessageTo(
                     potentialFollowerInfo.address,
@@ -136,9 +144,14 @@ public class Leader extends Truck implements PlatoonTruck{
                     Integer.valueOf(potentialFollowerInfo.originatingMessage.getBody().get("truck_id")),
                     "speed",
                     String.valueOf(this.getSpeed()),
-                    "location",
+                    "truck_location",
+                    String.valueOf(this.getDirectionLocation()),
                     "role",
-                    "follower");
+                    "follower",
+                    "optimal_distance",
+                    String.valueOf(optimalDistanceToLeader));
+                // Need to add follower 1 to distance
+                optimalDistanceToLeader+= 3 + DISTANCE_BETWEEN_TRUCKS;
             }
             truckState = "journey";
             this.logger.info("Assigned roles to potential platoon trucks. Beginning journey");
