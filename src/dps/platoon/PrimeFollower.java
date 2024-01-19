@@ -62,16 +62,11 @@ public class PrimeFollower extends Truck implements PlatoonTruck {
                     //leader is no longer in communication
                     assumeLeadership();
                 }
-                this.logger.info("Processed messages as " + this.getClass().getSimpleName() + ". Sleeping for 1 sec.");
                 try {
-                    Thread.sleep(1000); // Sleep for a while before next cycle
+                    Thread.sleep(100);
                 } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt(); // interrupt status
-                    logger.severe("PrimeFollower interrupted: " + e.getMessage());
-                    break;
-                } catch (Exception e) {
-                    logger.severe("Error in PrimeFollower run loop: " + e.getMessage());
-                    // Handle other exceptions appropriately
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
                 }
             }
         }
