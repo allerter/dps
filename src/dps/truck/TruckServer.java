@@ -7,6 +7,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
@@ -39,6 +40,7 @@ public class TruckServer extends Thread {
     private LinkedBlockingQueue<Message> messageQueue = new LinkedBlockingQueue<>();
     private AtomicInteger messageCounter = new AtomicInteger(0);
     private LocalDateTime timeOfLastMessage = Utils.nowDateTime();
+    private int[] clockMatrix = {0, 0, 0, 0};
 
     // General
     final static int MAX_RETRIES = 3;
@@ -195,6 +197,7 @@ public class TruckServer extends Thread {
                         rStringBuilder.append(line);
                     }
                     Message receivedMessage = Message.fromJson(rStringBuilder.toString());
+                    this.updateClockMatrix(Utils.stringToClockMatrixArray(receivedMessage.getBody().get("clock_matrix")));
                     this.addMessageToQueue(receivedMessage);
                 } catch (JsonProcessingException e) {
                     System.out.println(e.getMessage());
@@ -238,7 +241,25 @@ public class TruckServer extends Thread {
 
     }
 
+    private void updateClockMatrix(int[] receivedClockMatrix) {
+        for (int i = 0; i < clockMatrix.length; i++) {
+            if (clockMatrix[i] < receivedClockMatrix[i]){
+                if (i == truckId){
+                    this.logger.severe("Own clock tick behind the assumption of other truck.");
+                }
+                clockMatrix[i] = receivedClockMatrix[i];
+            }
+        }
+    }
+
     public int incrementAndGetMessageCounter() {
+        // Increment own clock cycle
+        for (int i = 0; i < clockMatrix.length; i++) {
+            if (i == truckId){
+                clockMatrix[i]++;
+            }
+        }
+
         return messageCounter.incrementAndGet();
     }
 
@@ -256,8 +277,9 @@ public class TruckServer extends Thread {
     }
 
     public int sendMessageTo(SocketAddress socketAddress, String messageType, int ackId, String... args) {
+        int messageId = this.incrementAndGetMessageCounter();
         // Add basic info to message body
-        String[] fullArgs = new String[args.length + 6];
+        String[] fullArgs = new String[args.length + 8];
         int counter = 0;
         for (String s : args)
             fullArgs[counter++] = s;
@@ -267,8 +289,10 @@ public class TruckServer extends Thread {
         fullArgs[counter + 3] = this.getSocketAddress().toString();
         fullArgs[counter + 4] = "receiver";
         fullArgs[counter + 5] = socketAddress.toString();
+        fullArgs[counter + 6] = "clock_matrix";
+        fullArgs[counter + 7] = Utils.clockMatrixArrayToString(clockMatrix);
 
-        Message message = new Message(this.incrementAndGetMessageCounter(), Utils.now(), messageType, ackId, fullArgs);
+        Message message = new Message(messageId, Utils.now(), messageType, ackId, fullArgs);
         try {
             TruckClient.sendMessage(socketAddress, message);
             this.logger.finer("Sent message to " + socketAddress.toString());
