@@ -69,39 +69,48 @@ public class Follower extends Truck {
     @Override
     public void run() {
         this.logger.info("Started follower");
+        truckState = "journey";
         while (true) {
             this.processReceivedMessages();
-            Location leaderLocation = leaderTruckLocation.getHeadLocation();
-            Location truckLocation = this.getLocation();
-
-            // Adjust speed to match leader's
-            int currentSpeed = this.getSpeed();
-            if (currentSpeed < leaderSpeed){
-                this.increaseSpeed(leaderSpeed - currentSpeed);
-            } else if (currentSpeed > leaderSpeed){
-                this.reduceSpeed(currentSpeed - leaderSpeed);
-            }
+            switch (truckState) {
+                case "journey":
+                    Location leaderLocation = leaderTruckLocation.getHeadLocation();
+                    Location truckLocation = this.getLocation();
+        
+                    // Adjust speed to match leader's
+                    int currentSpeed = this.getSpeed();
+                    if (currentSpeed < leaderSpeed){
+                        this.increaseSpeed(leaderSpeed - currentSpeed);
+                    } else if (currentSpeed > leaderSpeed){
+                        this.reduceSpeed(currentSpeed - leaderSpeed);
+                    }
+                    
+                    // Adjust direction to match leader's column
+                    int columnDifference = leaderLocation.getColumn() - truckLocation.getColumn();
+                    if (columnDifference > 0){
+                        this.server.setDirection(Direction.NORTH_EAST);
+                    } else if (columnDifference < 0){
+                        this.server.setDirection(Direction.NORTH_WEST);
+                    }
+        
+                    // Adjust position to match optimal distance
+                    int rowDifference = leaderLocation.getRow() - truckLocation.getRow();
+                    if (rowDifference < optimalDistanceToLeader){
+                        this.reduceSpeed(rowDifference);
+                    } else if (rowDifference > optimalDistanceToLeader){
+                        this.increaseSpeed(rowDifference);
+                    }
+                    break;
             
-            // Adjust direction to match leader's column
-            int columnDifference = leaderLocation.getColumn() - truckLocation.getColumn();
-            if (columnDifference > 0){
-                this.server.setDirection(Direction.NORTH_EAST);
-            } else if (columnDifference < 0){
-                this.server.setDirection(Direction.NORTH_WEST);
+                default:
+                    break;
             }
-
-            // Adjust position to match optimal distance
-            int rowDifference = leaderLocation.getRow() - truckLocation.getRow();
-            if (rowDifference < optimalDistanceToLeader){
-                this.reduceSpeed(rowDifference);
-            } else if (rowDifference > optimalDistanceToLeader){
-                this.increaseSpeed(rowDifference);
-            }
-
-
-
-            this.logger.info("Processed messages as " + this.getClass().getSimpleName() + ". Sleeping for 1 sec.");          
-        }
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }        }
     }
 
     private void reduceSpeed(int newSpeed) {
