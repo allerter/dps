@@ -28,7 +28,7 @@ public class Main {
         ConsoleHandler consoleHandler = new ConsoleHandler();
         consoleHandler.setFormatter(new SimpleFormatter());
 
-        Logger rootLogger = LogManager.getLogManager().getLogger("");
+        Logger rootLogger = Logger.getLogger("dps");
         rootLogger.setLevel(Level.FINEST);
         for (Handler h : rootLogger.getHandlers()) {
             h.setLevel(Level.FINEST);

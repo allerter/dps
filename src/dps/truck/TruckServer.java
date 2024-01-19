@@ -110,7 +110,7 @@ public class TruckServer extends Thread {
         SocketAddress socketAddress,
         GridMap map) throws IOException {
         this.truckId = id;
-        this.logger = Logger.getLogger(this.toString());
+        this.logger = Logger.getLogger("dps." + this.toString());
         this.speed = speed;
         this.location = location;
         this.destination = destination;
