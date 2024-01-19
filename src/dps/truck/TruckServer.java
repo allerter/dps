@@ -8,6 +8,8 @@ import java.net.Socket;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
@@ -41,7 +43,7 @@ public class TruckServer extends Thread {
     private SocketAddress socketAddress;
     private LinkedBlockingQueue<Message> messageQueue = new LinkedBlockingQueue<>();
     private AtomicInteger messageCounter = new AtomicInteger(0);
-    private ArrayList<UnacknowledgedMessage> unacknowledgedSentMessages = new ArrayList<>();
+    private List<UnacknowledgedMessage> unacknowledgedSentMessages = Collections.synchronizedList(new ArrayList<UnacknowledgedMessage>());
     private LocalDateTime timeOfLastMessage = Utils.nowDateTime();
 
     // General
