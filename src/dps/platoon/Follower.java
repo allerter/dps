@@ -1,6 +1,7 @@
 package dps.platoon;
 
 import java.io.IOException;
+import java.time.temporal.ChronoUnit;
 import java.util.Map;
 
 import dps.Message;
@@ -94,15 +95,28 @@ public class Follower extends Truck {
                         this.server.setDirection(Direction.NORTH_EAST);
                     } else if (columnDifference < 0){
                         this.server.setDirection(Direction.NORTH_WEST);
+                    } else {
+                        this.server.setDirection(Direction.NORTH);
                     }
         
                     // Adjust position to match optimal distance
-                    int rowDifference = leaderLocation.getRow() - truckLocation.getRow();
-                    if (rowDifference < optimalDistanceToLeader){
-                        this.reduceSpeed(rowDifference);
-                    } else if (rowDifference > optimalDistanceToLeader){
-                        this.increaseSpeed(rowDifference);
+                    int supposedLeaderRowChange;
+                    if (leaderSpeed > 0){
+                        supposedLeaderRowChange = (int) ChronoUnit.SECONDS.between(leaderTruckLocation.getDateTime(), Utils.nowDateTime()) * leaderSpeed; 
+                    } else {
+                        supposedLeaderRowChange = 0;
                     }
+                    int rowDifference = Math.abs(leaderLocation.getRow() -  supposedLeaderRowChange - this.getLocation().getRow());
+                    if (rowDifference < optimalDistanceToLeader){
+                        int newSpeed = this.getSpeed() - 1;
+                        if (newSpeed < 0){
+                            newSpeed = 0;
+                        }
+                        this.reduceSpeed(newSpeed);
+                    } else if (rowDifference > optimalDistanceToLeader){
+                        this.increaseSpeed(this.getSpeed() + 1);
+                    }
+                    this.logger.info(String.format("Moving %s at speed %s with difference %s", this.getDirection(), this.getSpeed(), rowDifference));
                     break;
             
                 default:
