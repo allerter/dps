@@ -137,7 +137,8 @@ public class GridMap extends JFrame {
                 } else {
                     throw new IllegalArgumentException("Truck has illegal direction: " + direction);
                 }
-                needToRepaint = moveTruck(truckHead[0], truckHead[1], truckHead[0] - speed, destCol);
+                boolean hasTruckMoved = moveTruck(truckHead[0], truckHead[1], truckHead[0] - speed, destCol);
+                needToRepaint = needToRepaint || hasTruckMoved;
         }
         if (needToRepaint){
             repaint();
@@ -145,7 +146,7 @@ public class GridMap extends JFrame {
     }
 
     // Method to find the position of an element in a 2D grid
-    private int[] findElement(String target) {
+    public int[] findElement(String target) {
         for (int i = 0; i < grid.length; i++) {
             for (int j = 0; j < grid[i].length; j++) {
                 if (grid[i][j].equals(target)) {
