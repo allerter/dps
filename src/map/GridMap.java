@@ -1,21 +1,28 @@
 package map;
+import java.awt.Color;
+import java.awt.Graphics;
 import java.util.logging.Logger;
+
+import javax.swing.JFrame;
 
 import dps.truck.TruckLocation;
 
+public class GridMap extends JFrame {
 
-public class GridMap {
-    
     private String[][] grid;
     private Logger logger;
 
-    // Function to initialize the grid with values
-    public GridMap(
-        int rows,
-        int columns) {
-        
+    public GridMap(int rows, int columns) {
+
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setTitle("grid Grid Plotter");
+        setSize(400, 400);
+        setLocationRelativeTo(null);
+        setBackground(Color.WHITE); // Set background color to white
+        setVisible(true);
+
         // Set up logger
-        this.logger = Logger.getLogger(this.getClass().getSimpleName());
+        this.logger = Logger.getLogger("dps." + this.getClass().getSimpleName());
 
         // Fill grid with empty
         this.grid = new String[rows][columns];
@@ -24,8 +31,38 @@ public class GridMap {
                 grid[i][j] = "-";
             }
         }
-
     }
+
+    @Override
+    public void paint(Graphics g) {
+        super.paint(g);
+
+        int numRows = grid.length;
+        int numCols = grid[0].length;
+
+        int cellWidth = (getWidth() / numCols);
+        int cellHeight = (getHeight() / numRows);
+
+        // Draw white rectangles with black borders
+        for (int i = 0; i < numRows; i++) {
+            for (int j = 0; j < numCols; j++) {
+                String value = grid[i][j];
+
+                // Set background color to white
+                g.setColor(Color.WHITE);
+                g.fillRect(j * cellWidth, i * cellHeight, cellWidth, cellHeight);
+
+                // Draw black border lines
+                g.setColor(Color.BLACK);
+                g.drawRect(j * cellWidth, i * cellHeight, cellWidth, cellHeight);
+
+                // Draw the value in the center
+                g.drawString(String.valueOf(value), j * cellWidth + cellWidth / 2 - 5,
+                        i * cellHeight + cellHeight / 2 + 5);
+            }
+        }
+    }
+
     // Function to print the grid map
     public void printGrid() {
         for (int i = 0; i < grid.length; i++) {
@@ -47,22 +84,23 @@ public class GridMap {
 
         // Add truck to map based on direction and head location
         if (isValidLocation(head_row, head_column)) {
-            grid[head_row][head_column] = "Head" + truck_id;
+            grid[head_row][head_column] = "H" + truck_id;
             if (direction == Direction.NORTH){
-                grid[head_row][head_column + 1] = "Tail" + truck_id;
-                grid[head_row][head_column + 1] = "Tail" + truck_id;
+                grid[head_row + 1][head_column] = "T" + truck_id;
+                grid[head_row + 2][head_column] = "T" + truck_id;
             } else if (direction == Direction.EAST) {
-                grid[head_row - 1][head_column] = "Tail" + truck_id;
-                grid[head_row - 2][head_column] = "Tail" + truck_id;
+                grid[head_row][head_column - 1] = "T" + truck_id;
+                grid[head_row][head_column - 2] = "T" + truck_id;
             } else if (direction == Direction.WEST) {
-                grid[head_row + 1][head_column] = "Tail" + truck_id;
-                grid[head_row + 2][head_column] = "Tail" + truck_id;
+                grid[head_row][head_column + 1] = "T" + truck_id;
+                grid[head_row][head_column + 2] = "T" + truck_id;
             } else {
                 throw new IllegalArgumentException("Invalid direction for new truck: " + direction);
             }
         } else {
             this.logger.info("Truck location is not valid: " + head_row + ":" + head_column);
         }
+        repaint();
     }
 
     // Function to check if a location is valid (empty) in the grid
@@ -75,15 +113,19 @@ public class GridMap {
     }
 
     synchronized public void update(TruckInfo[] truckInfos) {
+        boolean needToRepaint = false;
         for (TruckInfo truckInfo : truckInfos) {
             int id = truckInfo.getId();
             int speed = truckInfo.getSpeed();
             Direction direction = truckInfo.getDirection();
-
             // Move each truck to new position based on speed and direction
-            for (int i = 0; i < truckInfos.length; i++) {
-                int[] truckHead = findElement("Head" + id);
-                // If direction is north, trucks go straight up in array
+                int[] truckHead = findElement("H" + id);
+
+
+                if (truckHead == null){
+                    continue;
+                }
+                // If direction is north, trucks go straight up in grid
                 // Otherwise, they will move 1 column to left or right
                 int destCol;
                 if (direction == Direction.NORTH){
@@ -95,13 +137,14 @@ public class GridMap {
                 } else {
                     throw new IllegalArgumentException("Truck has illegal direction: " + direction);
                 }
-                moveTruck(truckHead[0], truckHead[1], truckHead[0] - speed, destCol);
-            }
-
+                needToRepaint = moveTruck(truckHead[0], truckHead[1], truckHead[0] - speed, destCol);
+        }
+        if (needToRepaint){
+            repaint();
         }
     }
 
-    // Method to find the position of an element in a 2D array
+    // Method to find the position of an element in a 2D grid
     private int[] findElement(String target) {
         for (int i = 0; i < grid.length; i++) {
             for (int j = 0; j < grid[i].length; j++) {
@@ -113,8 +156,11 @@ public class GridMap {
         return null; // Return null if the element is not found
     }
 
-    private void moveTruck(int sourceRow, int sourceCol, int destRow, int destCol) {
+    private boolean moveTruck(int sourceRow, int sourceCol, int destRow, int destCol) {
         // Move head
+        if (sourceRow == destRow && sourceCol == destCol){
+            return false;
+        }
         grid[destRow][destCol] = grid[sourceRow][sourceCol];
         grid[sourceRow][sourceCol] = "-";
 
@@ -123,5 +169,6 @@ public class GridMap {
             grid[destRow + i][destCol] = grid[sourceRow + i][sourceCol];
             grid[sourceRow + i][sourceCol] = "-";
         }
+        return true;
     }
 }
