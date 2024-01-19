@@ -214,7 +214,14 @@ public class Leader extends Truck implements PlatoonTruck{
 
     private void increase_speed(int newSpeed) {
         this.server.setSpeed(newSpeed);
-        this.broadcast(platoon.getSocketAddresses(), "new_speed", "speed", String.valueOf(this.getSpeed()));
+        this.broadcast(
+            platoon.getSocketAddresses(),
+            "new_speed",
+            "speed",
+            String.valueOf(this.getSpeed()),
+            "truck_location",
+            this.getDirectionLocation().toString()
+            );
     }
 
     public void handleUnresponsiveReceiver(Message message) {
