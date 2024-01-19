@@ -39,13 +39,13 @@ public class Main {
         Logger logger = Logger.getLogger("main");
 
         // Set up map
-        Location destination = new Location(0, 50);
-        GridMap map = new GridMap(100, 100);
-        TruckLocation leaderLocation = new TruckLocation(97, 50, Direction.NORTH);
+        Location destination = new Location(0, 25);
+        GridMap map = new GridMap(50, 50);
+        TruckLocation leaderLocation = new TruckLocation(47, 25, Direction.NORTH);
         TruckLocation[] otherTruckLocations= {
-            new TruckLocation(97, 48, Direction.NORTH),
-            new TruckLocation(97, 46, Direction.NORTH),
-            new TruckLocation(97, 52, Direction.NORTH)
+            new TruckLocation(47, 23, Direction.NORTH),
+            new TruckLocation(47, 21, Direction.NORTH),
+            new TruckLocation(47, 27, Direction.NORTH)
         };
         // Add trucks to map
         map.addTruck(0, leaderLocation);
