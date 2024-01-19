@@ -6,15 +6,10 @@ import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import javax.management.RuntimeErrorException;
 
@@ -43,7 +38,6 @@ public class TruckServer extends Thread {
     private SocketAddress socketAddress;
     private LinkedBlockingQueue<Message> messageQueue = new LinkedBlockingQueue<>();
     private AtomicInteger messageCounter = new AtomicInteger(0);
-    private List<UnacknowledgedMessage> unacknowledgedSentMessages = Collections.synchronizedList(new ArrayList<UnacknowledgedMessage>());
     private LocalDateTime timeOfLastMessage = Utils.nowDateTime();
 
     // General
@@ -194,54 +188,13 @@ public class TruckServer extends Thread {
                         rStringBuilder.append(line);
                     }
                     Message receivedMessage = Message.fromJson(rStringBuilder.toString());
-
-                    // Check to see if received message acknowledges any sent messages
-                    // If it does, remove it from our unacknowledged messages
-                    int ackId = receivedMessage.getAckId();
-                    ArrayList<UnacknowledgedMessage> acknowledgedMessages = new ArrayList<>();
-                    for (UnacknowledgedMessage messageInfo : unacknowledgedSentMessages) {
-                        if (messageInfo.getCorrespondingIdsList().contains(ackId)) {
-                            acknowledgedMessages.add(messageInfo);
-                            this.logger.fine(messageInfo.toString() + " was acknowledged.");
-                            break;
-                        }
-                    }
-                    unacknowledgedSentMessages.removeAll(acknowledgedMessages);
-
                     this.addMessageToQueue(receivedMessage);
-
                 } catch (JsonProcessingException e) {
                     System.out.println(e.getMessage());
                 } catch (IOException e) {
                     System.err.println("Error in communication with the client: " + e.getMessage());
                 } catch (Exception e) {
                     e.printStackTrace();
-                }
-
-                // Check if messages from before have been acknowledged
-                for (UnacknowledgedMessage messageInfo : unacknowledgedSentMessages) {
-                    Message message = messageInfo.message;
-                    int messageTries = messageInfo.tries;
-                    SocketAddress receiver = messageInfo.receiver;
-                    if (messageTries == MAX_RETRIES) {
-                        this.logger.info("Message has not been acknowledged after 3 tries. Alerting truck.");
-                        this.truck.handleUnresponsiveReceiver(message);
-                    }
-                    if (messageTries < MAX_RETRIES && ChronoUnit.SECONDS.between(messageInfo.lastTry,
-                            LocalDateTime.now()) >= WAIT_BEFORE_TRY_SECONDS) {
-                        // Retry sending message
-                        this.logger.info("Retrying sending " + messageInfo.toString());
-                        message.getBody().put("retry", "true");
-                        int retryMessageId = this.sendMessageTo(
-                                receiver,
-                                message.getType(),
-                                message.getAckId(),
-                                message.getBody().entrySet().stream()
-                                        .flatMap(e -> Stream.of(e.getKey(), e.getValue())).collect(Collectors.toList())
-                                        .toArray(new String[message.getBody().keySet().size()]));
-                        messageInfo.incrementTries();
-                        messageInfo.addCorrespondingId(retryMessageId);
-                    }
                 }
 
                 // Manage cases where truck thread has exited
@@ -306,11 +259,6 @@ public class TruckServer extends Thread {
         Message message = new Message(this.incrementAndGetMessageCounter(), Utils.now(), messageType, ackId, fullArgs);
         try {
             TruckClient.sendMessage(socketAddress, message);
-            // If it's message's first try, only add it to the list of unacknowledged
-            // messages
-            if (message.getBody().get("retry") != "true") {
-                unacknowledgedSentMessages.add(new UnacknowledgedMessage(message, message.getUtc()));
-            }
             this.logger.finer("Sent message to " + socketAddress.toString());
         } catch (IOException e) {
             this.logger.severe("Error sending message: " + e.getMessage());
