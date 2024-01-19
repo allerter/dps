@@ -33,10 +33,12 @@ public class Main {
         for (Handler h : rootLogger.getHandlers()) {
             h.setLevel(Level.FINEST);
         }
+
+        
     }
 
     public static void main(String[] args) {
-        Logger logger = Logger.getLogger("main");
+        Logger logger = Logger.getLogger("dps.main");
 
         // Set up map
         Location destination = new Location(0, 25);
