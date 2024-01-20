@@ -90,6 +90,20 @@ public class Leader extends Truck implements PlatoonTruck{
                     case "join":
                         PotentialFollowerInfo newTruckInfo = new PotentialFollowerInfo(senderId, TruckLocation.fromString(messageBody.get("location")), senderAddress, message);
                         this.assignRoleToNewTruck(newTruckInfo);
+                        break;
+                    case "acknowledge_role":
+                        PotentialFollowerInfo acknowledgedFollower = null;
+                        for (PotentialFollowerInfo potentialFollowerInfo : joinedTrucksList) {
+                            if (potentialFollowerInfo.id == senderId){
+                                acknowledgedFollower = potentialFollowerInfo;
+                            }
+                        }
+                        joinedTrucksList.remove(acknowledgedFollower);
+                        // If all trucks acknowledged role, begin journey
+                        if (joinedTrucksList.size() == 0){
+                            truckState = "journey";
+                        }
+                        break;
                     default:
                         break;
                 }
