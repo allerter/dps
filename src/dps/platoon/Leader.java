@@ -12,7 +12,9 @@ import dps.truck.SocketAddress;
 import dps.truck.Truck;
 import dps.truck.TruckLocation;
 import dps.truck.TruckServer;
+import map.Direction;
 import map.GridMap;
+import map.Location;
 import dps.Utils;
 
 public class Leader extends Truck implements PlatoonTruck{
@@ -168,8 +170,7 @@ public class Leader extends Truck implements PlatoonTruck{
                     String.valueOf(optimalDistanceToLeaderTailTail));
                 // Need to add follower 1 to distance
             }
-            truckState = "journey";
-            this.logger.info("Assigned roles to potential platoon trucks. Beginning journey");
+            this.logger.info("Assigned roles to potential platoon trucks. Awaiting acknowledgement.");
         }
     }
 
@@ -214,6 +215,24 @@ public class Leader extends Truck implements PlatoonTruck{
                         this.logger.info("Pinging followers");
                         this.broadcast(platoon.getSocketAddresses(), "ping");
                     }
+
+                    // If not aligned with destination, change direction
+                    if (this.getLocation().getColumn() != this.getDestination().getColumn()){
+                        int targetColumn = this.getDestination().getColumn();
+                        int columnDifference = this.getLocation().getColumn() - targetColumn;
+                        System.out.println(this.getLocation().getColumn() + ":" + this.getDestination() + ":" + columnDifference);
+                        if (columnDifference > 0 && this.getDirection() != Direction.NORTH_WEST){
+                            this.changeDirection(Direction.NORTH_WEST);
+                            this.broadcast(platoon.getSocketAddresses(), "new_direction", "truck_location", this.getDirectionLocation().toString(), "target_column", String.valueOf(targetColumn));
+                        } else if (columnDifference < 0 && this.getDirection() != Direction.NORTH_EAST){
+                            this.changeDirection(Direction.NORTH_EAST);
+                            this.broadcast(platoon.getSocketAddresses(), "new_direction", "truck_location", this.getDirectionLocation().toString(), "target_column", String.valueOf(targetColumn));
+                        }
+                        this.logger.info("Changing direction to" + this.getDirection());
+                    } else if (this.getDirection() != Direction.NORTH) {
+                        this.changeDirection(Direction.NORTH);
+                    }
+
                     if (this.getSpeed() != JOURNEY_SPEED){
                         this.increase_speed(JOURNEY_SPEED);
                     }
@@ -230,6 +249,11 @@ public class Leader extends Truck implements PlatoonTruck{
                 e.printStackTrace();
             }
         }
+    }
+
+    @Override
+    protected void changeDirection(Direction newDirection) {
+        super.changeDirection(newDirection);
     }
 
     private void increase_speed(int newSpeed) {
