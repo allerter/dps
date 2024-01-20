@@ -119,6 +119,7 @@ public class GridMap extends JFrame {
             int speed = truckInfo.getSpeed();
             Direction direction = truckInfo.getDirection();
             // Move each truck to new position based on speed and direction
+            if (speed > 0){
                 int[] truckHead = findElement("H" + id);
 
 
@@ -137,8 +138,9 @@ public class GridMap extends JFrame {
                 } else {
                     throw new IllegalArgumentException("Truck has illegal direction: " + direction);
                 }
-                boolean hasTruckMoved = moveTruck(truckHead[0], truckHead[1], truckHead[0] - speed, destCol);
-                needToRepaint = needToRepaint || hasTruckMoved;
+                moveTruck(truckHead[0], truckHead[1], truckHead[0] - speed, destCol);
+                needToRepaint = true;
+            }
         }
         if (needToRepaint){
             repaint();
