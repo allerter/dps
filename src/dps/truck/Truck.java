@@ -8,6 +8,7 @@ import dps.CollisionSensor;
 import dps.GPSLocation;
 import dps.Message;
 import dps.platoon.Platoon;
+import dps.truck.TruckInMotion;
 
 public class Truck extends Thread {
     int truckId;
@@ -18,16 +19,19 @@ public class Truck extends Thread {
     GPSLocation destination;
     GPSLocation location;
     CollisionSensor collisionSensor;
+    private TruckInMotion truckMotion;
+    private TruckInMotion sharedTruckMotion;
 
     protected TruckServer server;
 
-    public Truck(int id, String direction, double speed, GPSLocation destination, GPSLocation location, TruckServer server) throws IOException {
+    public Truck(int id,TruckInMotion sharedTruckMotion, String direction, double speed, GPSLocation destination, GPSLocation location, TruckServer server) throws IOException {
         this.logger = Logger.getLogger(this.getClass().getSimpleName());
         // TODO: add that at the log message
         // text is formatted like this: Truck # - {log_message}
         this.truckState = "roaming";
         this.truckId = id;
         this.direction = direction;
+        this.sharedTruckMotion = sharedTruckMotion;
         this.speed = speed;
         this.destination = destination;
         this.location = location;
@@ -37,6 +41,14 @@ public class Truck extends Thread {
 
     public int getTruckId() {
         return truckId;
+    }
+    
+    public void setTsharedTruckMotion(TruckInMotion sharedTruckMotion) {
+    	this.sharedTruckMotion = sharedTruckMotion;
+    }
+    
+    public TruckInMotion getsharedTruckMotion() {
+        return sharedTruckMotion;
     }
 
     public String getTruckState() {
@@ -77,6 +89,10 @@ public class Truck extends Thread {
 
     public void setSpeed(double speed) {
         this.speed = speed;
+    }
+    
+    public Truck(TruckInMotion truckMotion) {
+        this.truckMotion = truckMotion;
     }
 
     public void processReceivedMessages() {
@@ -172,8 +188,13 @@ public class Truck extends Thread {
                 e.printStackTrace();
             }
         }
+        
+         
     }
-
+    
+   
+    
+ 
     protected void changeDirection(String newDirection) {
         this.setDirection(newDirection);
     }
@@ -185,4 +206,5 @@ public class Truck extends Thread {
     public void handleUnresponsiveReceiver(Message message) {
         truckState = "communication_lost";
     }
+
 }

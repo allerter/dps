@@ -8,14 +8,15 @@ import dps.Message;
 import dps.Utils;
 import dps.truck.SocketAddress;
 import dps.truck.Truck;
+import dps.truck.TruckInMotion;
 import dps.truck.TruckServer;
 
 public class Follower extends Truck {
 
     SocketAddress leaderAddress;
 
-    public Follower(int id, String direction, double speed, GPSLocation destination, GPSLocation location, TruckServer server, SocketAddress leaderAddress) throws IOException {
-        super(id, direction, speed, destination, location, server);
+    public Follower(int id,TruckInMotion sharedTruckMotion, String direction, double speed, GPSLocation destination, GPSLocation location, TruckServer server, SocketAddress leaderAddress) throws IOException {
+        super(id,sharedTruckMotion, direction, speed, destination, location, server);
         this.leaderAddress = leaderAddress;
     }
 

@@ -36,9 +36,9 @@ public class Main {
         TruckServer[] truckCores = new TruckServer[3];
         try {
 
-            truckCores[0] = new TruckServer(new SocketAddress("127.0.0.1", 5001));
-            truckCores[1] = new TruckServer(new SocketAddress("127.0.0.1", 5002));
-            truckCores[2] = new TruckServer(new SocketAddress("127.0.0.1", 5003));
+            truckCores[0] = new TruckServer(new SocketAddress("127.0.0.1", 5001), null);
+            truckCores[1] = new TruckServer(new SocketAddress("127.0.0.1", 5002), null);
+            truckCores[2] = new TruckServer(new SocketAddress("127.0.0.1", 5003), null);
         } catch (IOException e) {
             e.printStackTrace();
             return;
@@ -46,12 +46,12 @@ public class Main {
 
         try {
 
-            truckCores[0].setTruck(new Truck(1, "straight", 0, new GPSLocation(50.110924, 8.682127),
+            truckCores[0].setTruck(new Truck(1, null, "straight", 0, new GPSLocation(50.110924, 8.682127),
                     new GPSLocation(50.5136, 7.4653), truckCores[0]));
-            truckCores[1].setTruck(new Truck(2, "straight", 0, new GPSLocation(50.110924, 8.682127),
+            truckCores[1].setTruck(new Truck(2, null, "straight", 0, new GPSLocation(50.110924, 8.682127),
                     new GPSLocation(49.5136, 7.4653),
                     truckCores[1]));
-            truckCores[2].setTruck(new Truck(3, "straight", 0, new GPSLocation(50.110924, 8.682127),
+            truckCores[2].setTruck(new Truck(3, null, "straight", 0, new GPSLocation(50.110924, 8.682127),
                     new GPSLocation(48.5136, 7.4653),
                     truckCores[2]));
 
@@ -69,10 +69,10 @@ public class Main {
             for (int i = 0; i < truckCores.length; i++) {
                 trucksAddresses[i] = truckCores[i].getSocketAddress();
             }
-            TruckServer leaderCore = new TruckServer(new SocketAddress("127.0.0.1", 5000));
+            TruckServer leaderCore = new TruckServer(new SocketAddress("127.0.0.1", 5000), null);
             leaderCore.setTruck(new Leader(
                     0,
-                    "straight",
+                    null, "straight",
                     0.0,
                     new GPSLocation(50.110924, 8.682127),
                     new GPSLocation(51.5136, 7.4653),
