@@ -80,14 +80,6 @@ public class Follower extends Truck {
                 case "journey":
                     Location leaderLocation = leaderTruckLocation.getHeadLocation();
                     Location truckLocation = this.getLocation();
-        
-                    // Adjust speed to match leader's
-                    int currentSpeed = this.getSpeed();
-                    if (currentSpeed < leaderSpeed){
-                        this.increaseSpeed(leaderSpeed - currentSpeed);
-                    } else if (currentSpeed > leaderSpeed){
-                        this.reduceSpeed(currentSpeed - leaderSpeed);
-                    }
                     
                     // Adjust direction to match leader's column
                     int columnDifference = leaderLocation.getColumn() - truckLocation.getColumn();
@@ -100,6 +92,8 @@ public class Follower extends Truck {
                     }
         
                     // Adjust position to match optimal distance
+                    int currentSpeed = this.getSpeed();
+                    int newSpeed;
                     int supposedLeaderRowChange;
                     if (leaderSpeed > 0){
                         supposedLeaderRowChange = (int) ChronoUnit.SECONDS.between(leaderTruckLocation.getDateTime(), Utils.nowDateTime()) * leaderSpeed; 
@@ -108,14 +102,16 @@ public class Follower extends Truck {
                     }
                     int rowDifference = Math.abs(leaderLocation.getRow() -  supposedLeaderRowChange - this.getLocation().getRow());
                     if (rowDifference < optimalDistanceToLeader){
-                        int newSpeed = this.getSpeed() - 1;
+                        newSpeed = currentSpeed - 1;
                         if (newSpeed < 0){
                             newSpeed = 0;
                         }
-                        this.reduceSpeed(newSpeed);
                     } else if (rowDifference > optimalDistanceToLeader){
-                        this.increaseSpeed(this.getSpeed() + 1);
+                        newSpeed = currentSpeed + 1;
+                    } else {
+                        newSpeed = leaderSpeed;
                     }
+                    this.setSpeed(newSpeed);
                     this.logger.info(String.format("Moving %s at speed %s with difference %s", this.getDirection(), this.getSpeed(), rowDifference));
                     break;
             
