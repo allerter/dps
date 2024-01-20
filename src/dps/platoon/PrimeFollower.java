@@ -1,45 +1,73 @@
 package dps.platoon;
 
 import java.io.IOException;
-import java.time.LocalDateTime;
 
 import dps.truck.Truck;
-import dps.truck.TruckLocation;
 import dps.truck.TruckServer;
+import map.Direction;
 import map.Location;
 
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import dps.Message;
+import dps.Utils;
+import dps.truck.DatedTruckLocation;
 import dps.truck.SocketAddress;
 
 public class PrimeFollower extends Truck implements PlatoonTruck {
 
     private Platoon platoon; 
-    private boolean isLeader = false;
     private List<SocketAddress> platoonMembers;
-    private LocalDateTime lastLeaderPingTime;
     private final int LEADER_COMMUNICATION_TIMEOUT = 20; // seconds
 
-    private int leaderId;// current leader id
-    private SocketAddress leaderAddress;
-    private ArrayList<SocketAddress> platoonAddresses = new ArrayList<>();
     int leaderSpeed;
-    TruckLocation leaderTruckLocation; 
+    DatedTruckLocation leaderTruckLocation; 
+    int optimalDistanceToLeaderTail;
 
-
-    public PrimeFollower(TruckServer server, int leaderSpeed, TruckLocation leaderTruckLocation, Platoon platoon) throws IOException {
+    public PrimeFollower(TruckServer server, Platoon platoon, int leaderSpeed, DatedTruckLocation leaderTruckLocation, int optimalDistanceToLeaderTail) throws IOException {
         super(server);
         this.platoon = platoon;
-        this.platoonAddresses = new ArrayList<>();
         this.leaderSpeed = leaderSpeed;
         this.leaderTruckLocation = leaderTruckLocation;
+        this.optimalDistanceToLeaderTail = optimalDistanceToLeaderTail;
     }
 
-
+    @Override
+    public void processReceivedMessages() {
+        while (true) {
+            Message message = this.server.getMessageQueue().poll();
+            if (message == null) {
+                return;
+            } else {
+                this.logger.info("New message available: " + message.toString());
+                String messageType = message.getType();
+                Map<String, String> messageBody = message.getBody();
+                switch (messageType) {
+                    case "discovery":
+                        this.logger.info("Discovery message received. Discarding.");    
+                        break;
+                    case "new_speed":
+                        leaderSpeed = Integer.valueOf(messageBody.get("speed"));
+                        leaderTruckLocation = DatedTruckLocation.fromString(messageBody.get("truck_location"));
+                        this.logger.info("Adapted speed to leader's. New speed: " + this.getSpeed() + ", Location: " + leaderTruckLocation.toString());
+                        break;
+                    case "new_direction":
+                        leaderTruckLocation = DatedTruckLocation.fromString(messageBody.get("truck_location"));
+                        leaderTruckLocation.setColumn(Integer.valueOf(messageBody.get("target_column")));
+                        this.logger.info("Updated leader's direction. New leader direction: " + leaderTruckLocation.getDirection());
+                        break;
+                    case "disconnect":
+                        throw new IllegalArgumentException("leader_change not implemented.");  
+                    default:
+                        this.logger.warning("Unknown message type: " + messageType + ". Ignoring.");
+                    
+                }
+            }
+        }
+    }
     
     
     @Override
@@ -48,39 +76,66 @@ public class PrimeFollower extends Truck implements PlatoonTruck {
             logger.info("Prime Follower started operation");
             while (true) {
                 processReceivedMessages();
-    
-                // Adjust speed to match leader's
-                int currentSpeed = this.getSpeed();
-                if (currentSpeed < leaderSpeed){
-                    this.increaseSpeed(leaderSpeed - currentSpeed);
-                } else if (currentSpeed > leaderSpeed){
-                    this.reduceSpeed(currentSpeed - leaderSpeed);
+            
+                // Adjust direction to match leader's column
+                int columnDifference = leaderTruckLocation.getColumn() - this.getLocation().getColumn();
+                if (columnDifference > 0){
+                    this.server.setDirection(Direction.NORTH_EAST);
+                } else if (columnDifference < 0){
+                    this.server.setDirection(Direction.NORTH_WEST);
+                } else {
+                    this.server.setDirection(Direction.NORTH);
                 }
+                int newSpeed = calculateNewSpeed(this.getLocation(), leaderTruckLocation.getHeadLocation(), leaderTruckLocation.getDateTime(), this.getSpeed(), leaderSpeed, optimalDistanceToLeaderTail + 1);
+                this.setSpeed(newSpeed);
+                this.logger.info(String.format("Moving %s at speed %s", this.getDirection(), this.getSpeed()));
                 // Check if leader is still in communication
-                if (ChronoUnit.SECONDS.between(this.server.getTimeOfLastMessage(),
-                                LocalDateTime.now()) > LEADER_COMMUNICATION_TIMEOUT) {
-                    //leader is no longer in communication
-                    assumeLeadership();
-                }
+                // if (ChronoUnit.SECONDS.between(this.server.getTimeOfLastMessage(),
+                //                LocalDateTime.now()) > LEADER_COMMUNICATION_TIMEOUT) {
+                //    //leader is no longer in communication
+                //    assumeLeadership();
+                // }
                 try {
                     Thread.sleep(100);
                 } catch (InterruptedException e) {
-                    // TODO Auto-generated catch block
                     e.printStackTrace();
                 }
             }
         }
-        
-    
-        private void reduceSpeed(int i) {
-        this.server.setSpeed(i);
+
+        private static int calculateNewSpeed(Location truckLocation, Location leaderLocation, LocalDateTime leaderLastKnownLocationTime, int currentSpeed, int leaderSpeed, int optimalDistanceToLeaderTail) {
+            // Adjust position to match optimal distance
+            int newSpeed = currentSpeed;
+            int supposedLeaderRowChange;
+            int nextLeaderRow;
+            // Calculate where leader will be based on last known location and speed.
+            supposedLeaderRowChange = (int) ChronoUnit.SECONDS.between(leaderLastKnownLocationTime, Utils.nowDateTime()) * leaderSpeed;
+            nextLeaderRow = leaderLocation.getRow() -  supposedLeaderRowChange;
+            // Calculate what our speed needs to be to catch up to leader
+            int rowDifference;
+            int nextRow;
+            do {
+                nextRow = truckLocation.getRow() - newSpeed;
+                rowDifference = Math.abs(nextLeaderRow - nextRow);
+                // Distance too much, increase speed
+                if (rowDifference > optimalDistanceToLeaderTail){
+                    if (newSpeed < 4){
+                        newSpeed++;
+                    } else{
+                        break;
+                    }
+                // Distance too small, decrease speed
+                } else if (rowDifference < optimalDistanceToLeaderTail){
+                    if (newSpeed > 0){
+                        newSpeed--;
+                    } else{
+                        break;
+                    }
+                }
+                System.out.println(nextRow + ":" + nextLeaderRow + ":" + optimalDistanceToLeaderTail + ":" + newSpeed);
+            } while (rowDifference != optimalDistanceToLeaderTail);
+            return newSpeed;
     }
-        private void increaseSpeed(int i) {
-        this.server.setSpeed(i);
-    }
-
-
-
 
         private void assumeLeadership() {
             logger.info("Assuming leadership role.");
@@ -117,39 +172,6 @@ public class PrimeFollower extends Truck implements PlatoonTruck {
         }
     }
 */
-    
-    
-
-    @Override
-    public void processReceivedMessages() {
-                super.processReceivedMessages(); // Handle truck messages
-
-        while (true) {
-            Message message = this.server.getMessageQueue().poll();
-            if (message == null) {
-                return;
-            } else {
-                this.logger.info("Prime Follower received message: " + message.toString());
-                String messageType = message.getType();
-                Map<String, String> messageBody = message.getBody();
-
-                switch (messageType) {
-                    case "disconnect":
-                        truckState = "replace_leader";
-                    case "new_speed":
-                        leaderSpeed = Integer.valueOf(messageBody.get("speed"));
-                    case "platoon_update":
-                        // Update platoon members list
-                        updatePlatoonMembers(messageBody.get("platoon_members"));
-                        break;
-                    // Add more cases as per your message types
-                    default:
-                        break;
-                }
-            }
-        }
-
-    }
     private void updatePlatoonMembers(String membersData) {
         // Assuming membersData is a comma-separated list of member addresses
         String[] members = membersData.split(",");
