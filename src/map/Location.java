@@ -20,4 +20,8 @@ public class Location {
     public void setColumn(int column) {
         this.column = column;
     }
+    @Override
+    public String toString() {
+        return String.format("Location(row=%d, column=%d)", this.row, this.column);
+    }
 }
