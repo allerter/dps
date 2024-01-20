@@ -109,7 +109,7 @@ public class GridMap extends JFrame {
     }
 
     public static int calculateDistance(Location location, Location location2) {
-        return (location.getRow() - location2.getRow()) + (location.getColumn() - location2.getColumn());
+        return (location2.getRow() - location.getRow()) + (location2.getColumn() - location.getColumn());
     }
 
     synchronized public void update(TruckInfo[] truckInfos) {
