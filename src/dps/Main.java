@@ -1,6 +1,8 @@
 package dps;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.ConsoleHandler;
@@ -43,11 +45,11 @@ public class Main {
         // Set up map
         Location destination = new Location(0, 25);
         GridMap map = new GridMap(50, 50);
-        TruckLocation leaderLocation = new TruckLocation(47, 25, Direction.NORTH);
+        TruckLocation leaderLocation = new TruckLocation(31, 25, Direction.NORTH);
         TruckLocation[] otherTruckLocations= {
-            new TruckLocation(47, 23, Direction.NORTH),
-            new TruckLocation(47, 21, Direction.NORTH),
-            new TruckLocation(47, 27, Direction.NORTH)
+            new TruckLocation(36, 25, Direction.NORTH),
+            new TruckLocation(41, 25, Direction.NORTH),
+            new TruckLocation(46, 25, Direction.NORTH)
         };
         // Add trucks to map
         map.addTruck(0, leaderLocation);
@@ -103,24 +105,30 @@ public class Main {
         }
         truckCores.add(0, leaderCore);
 
-    while (true) {
-        // Create HashMaps and add entries for direction and speed
-        List<TruckInfo> directionAndSpeedList = new ArrayList<>();
-        for (TruckServer truckCore : truckCores) {
-            TruckInfo entry = new TruckInfo(truckCore.getTruckId(), truckCore.getDirection(), truckCore.getSpeed());
-            directionAndSpeedList.add(entry);
-        }
+        LocalDateTime timer = Utils.nowDateTime();
+        while (true) {
+            // Create HashMaps and add entries for direction and speed
+            List<TruckInfo> directionAndSpeedList = new ArrayList<>();
+            for (TruckServer truckCore : truckCores) {
+                TruckInfo entry = new TruckInfo(truckCore.getTruckId(), truckCore.getDirection(), truckCore.getSpeed());
+                directionAndSpeedList.add(entry);
+            }
 
-        try {
-            map.update(directionAndSpeedList.toArray(new TruckInfo[directionAndSpeedList.size()]));
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            if (timer != null  && ChronoUnit.SECONDS.between(timer, Utils.nowDateTime()) >= 7){
+                destination.setColumn(24);
+                timer = null;
+            }
+            try {
+                map.update(directionAndSpeedList.toArray(new TruckInfo[directionAndSpeedList.size()]));
+                logger.finer("map updated");
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+            // map.printGrid();
+            // hi have a good day
         }
-        // map.printGrid();
-        // hi have a good day
-    }
     }
 
 }
