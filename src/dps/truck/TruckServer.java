@@ -214,8 +214,8 @@ public class TruckServer extends Thread {
                         SocketAddress leaderSocketAddress = SocketAddress.fromString(this.truck.referenceMessage.getBody().get("address"));
                         int leaderSpeed = Integer.valueOf(this.truck.referenceMessage.getBody().get("speed"));
                         DatedTruckLocation leaderTruckLocation = DatedTruckLocation.fromString(this.truck.referenceMessage.getBody().get("truck_location"));
-                        int optimalDistanceToLeader = Integer.valueOf(this.truck.referenceMessage.getBody().get("optimal_distance"));
-                        this.joinPlatoonAsFollower(leaderSocketAddress, leaderSpeed, leaderTruckLocation, optimalDistanceToLeader);
+                        int optimalDistanceToLeaderTail = Integer.valueOf(this.truck.referenceMessage.getBody().get("optimal_distance"));
+                        this.joinPlatoonAsFollower(leaderSocketAddress, leaderSpeed, leaderTruckLocation, optimalDistanceToLeaderTail);
                     }
                     else if (this.truck.truckState.equals("join_as_prime_follower")){
                         SocketAddress leaderSocketAddress = SocketAddress.fromString(this.truck.referenceMessage.getBody().get("address"));
@@ -311,7 +311,7 @@ public class TruckServer extends Thread {
         return messageQueue;
     }
 
-    public void joinPlatoonAsFollower(SocketAddress leaderAddress, int leaderSpeed, DatedTruckLocation leaderTruckLocation, int optimalDistanceToLeader) {
+    public void joinPlatoonAsFollower(SocketAddress leaderAddress, int leaderSpeed, DatedTruckLocation leaderTruckLocation, int optimalDistanceToLeaderTail) {
         this.logger.info("Joining platoon as follower");
         if (!(this.truck instanceof Truck)) {
             throw new RuntimeErrorException(null,
@@ -324,7 +324,7 @@ public class TruckServer extends Thread {
                     leaderAddress,
                     leaderSpeed,
                     leaderTruckLocation,
-                    optimalDistanceToLeader);
+                    optimalDistanceToLeaderTail);
             this.truck.start();
         } catch (IOException e) {
             // TODO Auto-generated catch block

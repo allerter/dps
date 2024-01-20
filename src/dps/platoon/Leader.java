@@ -117,6 +117,7 @@ public class Leader extends Truck implements PlatoonTruck{
                 new PlatoonTruckInfo(joinedTrucksList.get(0).id, joinedTrucksList.get(0).address),
                 new PlatoonTruckInfo(joinedTrucksList.get(1).id, joinedTrucksList.get(1).address)
             );
+            int optimalDistanceToLeaderTailTail = DISTANCE_BETWEEN_TRUCKS;
             try {
                 this.sendMessageTo(
                     primeFollower.address,
@@ -129,15 +130,16 @@ public class Leader extends Truck implements PlatoonTruck{
                     "speed",
                     String.valueOf(this.getSpeed()),
                     "truck_location",
-                    String.valueOf(this.getDirectionLocation()));
-                    ;
+                    String.valueOf(this.getTailDirectionLocation()),
+                    "optimal_distance",
+                    String.valueOf(optimalDistanceToLeaderTailTail));
             } catch (JsonProcessingException e) {
                 e.printStackTrace();
             }
             
-            // Optimal distance = between distance + prime follower length + between distance
-            int optimalDistanceToLeader = DISTANCE_BETWEEN_TRUCKS + 3 + DISTANCE_BETWEEN_TRUCKS; 
             for (PotentialFollowerInfo potentialFollowerInfo : joinedTrucksList) {
+                // Optimal distance = prime follower tail + between distance
+                optimalDistanceToLeaderTailTail += 5;
                 this.sendMessageTo(
                     potentialFollowerInfo.address,
                     "role",
@@ -145,13 +147,12 @@ public class Leader extends Truck implements PlatoonTruck{
                     "speed",
                     String.valueOf(this.getSpeed()),
                     "truck_location",
-                    String.valueOf(this.getDirectionLocation()),
+                    String.valueOf(this.getTailDirectionLocation()),
                     "role",
                     "follower",
                     "optimal_distance",
-                    String.valueOf(optimalDistanceToLeader));
+                    String.valueOf(optimalDistanceToLeaderTailTail));
                 // Need to add follower 1 to distance
-                optimalDistanceToLeader+= 3 + DISTANCE_BETWEEN_TRUCKS;
             }
             truckState = "journey";
             this.logger.info("Assigned roles to potential platoon trucks. Beginning journey");
@@ -159,6 +160,11 @@ public class Leader extends Truck implements PlatoonTruck{
     }
 
     
+    private TruckLocation getTailDirectionLocation() {
+        Location currentLocation = this.getLocation();
+       return new TruckLocation(currentLocation.getRow() + 2, currentLocation.getColumn(), getDirection());
+    }
+
     private SocketAddress getSocketAddress() {
         return server.getSocketAddress();
     }
