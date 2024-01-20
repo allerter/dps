@@ -218,11 +218,11 @@ public class TruckServer extends Thread {
                         this.joinPlatoonAsFollower(leaderSocketAddress, leaderSpeed, leaderTruckLocation, optimalDistanceToLeaderTail);
                     }
                     else if (this.truck.truckState.equals("join_as_prime_follower")){
-                        SocketAddress leaderSocketAddress = SocketAddress.fromString(this.truck.referenceMessage.getBody().get("address"));
                         int leaderSpeed = Integer.valueOf(this.truck.referenceMessage.getBody().get("speed"));
-                        TruckLocation leaderTruckLocation = TruckLocation.fromString(this.truck.referenceMessage.getBody().get("truck_location"));
+                        DatedTruckLocation leaderTruckLocation = DatedTruckLocation.fromString(this.truck.referenceMessage.getBody().get("truck_location"));
                         Platoon platoon = Platoon.fromJson(this.truck.referenceMessage.getBody().get("platoon"));
-                        this.joinPlatoonAsPrimeFollower(leaderSocketAddress, leaderSpeed, leaderTruckLocation, platoon);
+                        int optimalDistanceToLeaderTail = Integer.valueOf(this.truck.referenceMessage.getBody().get("optimal_distance"));
+                        this.joinPlatoonAsPrimeFollower(platoon, leaderSpeed, leaderTruckLocation, optimalDistanceToLeaderTail);
                     } else {
                         throw new IllegalArgumentException("Truck exited with undefined role: " + this.truck.truckState);
                     }
@@ -332,7 +332,7 @@ public class TruckServer extends Thread {
         }
     }
 
-    public void joinPlatoonAsPrimeFollower(SocketAddress leaderAddress, int leaderSpeed, TruckLocation leaderTruckLocation, Platoon platoon) {
+    public void joinPlatoonAsPrimeFollower(Platoon platoon, int leaderSpeed, DatedTruckLocation leaderTruckLocation, int optimalDistanceToLeaderTail) {
         this.logger.info("Joining platoon as prime follower");
         if (!(this.truck instanceof Truck)) {
             throw new RuntimeErrorException(null,
@@ -342,9 +342,11 @@ public class TruckServer extends Thread {
         try {
             this.truck = new PrimeFollower(
                     this,
+                    platoon,
                     leaderSpeed,
                     leaderTruckLocation,
-                    platoon);
+                    optimalDistanceToLeaderTail
+                    );
             this.truck.start();
         } catch (IOException e) {
             // TODO Auto-generated catch block
