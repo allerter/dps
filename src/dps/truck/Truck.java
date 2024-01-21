@@ -169,10 +169,12 @@ public class Truck extends Thread {
     }
 
     protected void changeDirection(Direction newDirection) {
+        this.logger.info("Changing direction to " + newDirection);
         this.setDirection(newDirection);
     }
 
     protected void changeSpeed(int newSpeed) {
+        this.logger.info("Changing speed from " + this.getSpeed() + " to " + newSpeed);
         this.setSpeed(newSpeed);
     }
 
