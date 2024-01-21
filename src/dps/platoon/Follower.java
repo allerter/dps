@@ -98,7 +98,9 @@ public class Follower extends Truck {
                     }
         
                     int newSpeed = calculateNewSpeed(this.getLocation(), leaderTruckLocation.getHeadLocation(), leaderTruckLocation.getDateTime(), this.getSpeed(), leaderSpeed, optimalDistanceToLeaderTail);
-                    this.setSpeed(newSpeed);
+                    if (this.getSpeed() != newSpeed){
+                        this.changeSpeed(newSpeed);
+                    }
                     this.logger.info(String.format("Moving %s at speed %s.", this.getDirection(), this.getSpeed()));
                     break;
                 case "journey_end":
