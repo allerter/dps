@@ -59,7 +59,9 @@ public class Leader extends Truck implements PlatoonTruck{
         fullArgs[counter + 2] = "truck_location";
         fullArgs[counter + 3] = this.getTailDirectionLocation().toString();
         for (SocketAddress truckAddress : truckSocketAddresses) {
-            this.server.sendMessageTo(truckAddress, messageType, -1, fullArgs);
+            if (truckAddress != this.getSocketAddress()){
+                this.server.sendMessageTo(truckAddress, messageType, -1, fullArgs);
+            }
         }
     }
     
@@ -218,8 +220,8 @@ public class Leader extends Truck implements PlatoonTruck{
                     waitForJoin++;
                     break;          
                 case "journey":
-                // Ping platoon trucks if it has been 5 seconds since last message exchange    
-                if (ChronoUnit.SECONDS.between(this.server.getTimeOfLastMessage(), Utils.nowDateTime()) >= WAIT_BEFORE_PING){
+                    // Ping platoon trucks if it has been 5 seconds since last message exchange    
+                    if (ChronoUnit.SECONDS.between(this.server.getTimeOfLastMessage(), Utils.nowDateTime()) >= WAIT_BEFORE_PING){
                         this.logger.info("Pinging followers");
                         this.broadcast(platoon.getSocketAddresses(), "ping");
                     }
@@ -249,8 +251,13 @@ public class Leader extends Truck implements PlatoonTruck{
 
                     // Handle speed
                     if (currentLocation.getRow() != this.getDestination().getRow()){ // Not at destination yet
-                        int newSpeed = JOURNEY_SPEED; // Go as fast as possible
-                        boolean hasSpeedChanged = newSpeed != this.getSpeed();
+                        int newSpeed = this.getSpeed();
+                        boolean hasSpeedChanged = false;
+                        if (currentLocation.getRow() - this.getDestination().getRow() >= 2 && this.getSpeed() != JOURNEY_SPEED){
+                           newSpeed = JOURNEY_SPEED;
+                            hasSpeedChanged = true;
+                        }
+
                         // Check to see if we need to slow down to arrive in the desired row
                         int slowerSpeed = newSpeed;
                         while (slowerSpeed > 0) {
