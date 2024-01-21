@@ -175,7 +175,7 @@ public class Leader extends Truck implements PlatoonTruck{
                     "role",
                     "follower",
                     "optimal_distance",
-                    String.valueOf(optimalDistanceToLeaderTailTail));
+                    String.valueOf(optimalDistanceToLeaderTail));
                 // Need to add follower 1 to distance
             }
             this.logger.info("Assigned roles to potential platoon trucks. Awaiting acknowledgement.");
