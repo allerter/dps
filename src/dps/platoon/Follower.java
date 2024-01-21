@@ -55,7 +55,7 @@ public class Follower extends Truck {
                     case "new_speed":
                         leaderSpeed = Integer.valueOf(messageBody.get("speed"));
                         leaderTruckLocation = DatedTruckLocation.fromString(messageBody.get("truck_location"));
-                        this.logger.info("Adapted speed to leader's. New speed: " + this.getSpeed() + ", Location: " + leaderTruckLocation.toString());
+                        this.logger.info("Updated leader's speed. New leader speed: " + leaderSpeed + ", Location: " + leaderTruckLocation.toString());
                         break;
                     case "new_direction":
                         leaderTruckLocation = DatedTruckLocation.fromString(messageBody.get("truck_location"));
@@ -112,6 +112,8 @@ public class Follower extends Truck {
                 default:
                     this.logger.warning("At unknown state:" + truckState);
                     break;
+
+                
             }
             try {
                 Thread.sleep(100);
