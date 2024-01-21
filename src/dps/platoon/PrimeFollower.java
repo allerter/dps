@@ -86,7 +86,7 @@ public class PrimeFollower extends Truck implements PlatoonTruck {
                 } else {
                     this.server.setDirection(Direction.NORTH);
                 }
-                int newSpeed = calculateNewSpeed(this.getLocation(), leaderTruckLocation.getHeadLocation(), leaderTruckLocation.getDateTime(), this.getSpeed(), leaderSpeed, optimalDistanceToLeaderTail + 1);
+                int newSpeed = calculateNewSpeed(this.getLocation(), leaderTruckLocation.getHeadLocation(), leaderTruckLocation.getDateTime(), this.getSpeed(), leaderSpeed, optimalDistanceToLeaderTail);
                 this.setSpeed(newSpeed);
                 this.logger.info(String.format("Moving %s at speed %s", this.getDirection(), this.getSpeed()));
                 // Check if leader is still in communication
@@ -116,7 +116,7 @@ public class PrimeFollower extends Truck implements PlatoonTruck {
             int nextRow;
             do {
                 nextRow = truckLocation.getRow() - newSpeed;
-                rowDifference = Math.abs(nextLeaderRow - nextRow);
+                rowDifference = Math.abs(nextLeaderRow - nextRow - 1);
                 // Distance too much, increase speed
                 if (rowDifference > optimalDistanceToLeaderTail){
                     if (newSpeed < 4){
@@ -132,7 +132,6 @@ public class PrimeFollower extends Truck implements PlatoonTruck {
                         break;
                     }
                 }
-                System.out.println(nextRow + ":" + nextLeaderRow + ":" + optimalDistanceToLeaderTail + ":" + newSpeed);
             } while (rowDifference != optimalDistanceToLeaderTail);
             return newSpeed;
     }

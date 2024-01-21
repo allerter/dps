@@ -123,7 +123,7 @@ public class Follower extends Truck {
         int nextRow;
         do {
             nextRow = truckLocation.getRow() - newSpeed;
-            rowDifference = Math.abs(nextLeaderRow - nextRow);
+            rowDifference = Math.abs(nextLeaderRow - nextRow - 1);
             // Distance too much, increase speed
             if (rowDifference > optimalDistanceToLeaderTail){
                 if (newSpeed < 4){
@@ -141,14 +141,6 @@ public class Follower extends Truck {
             }
         } while (rowDifference != optimalDistanceToLeaderTail);
         return newSpeed;
-    }
-
-    private void reduceSpeed(int newSpeed) {
-        this.server.setSpeed(newSpeed);
-    }
-
-    private void increaseSpeed(int newSpeed) {
-        this.server.setSpeed(newSpeed);
     }
 
     public void handleUnresponsiveReceiver(Message message) {
