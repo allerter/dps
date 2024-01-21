@@ -52,7 +52,8 @@ public class PrimeFollower extends Truck implements PlatoonTruck {
                     case "new_speed":
                         leaderSpeed = Integer.valueOf(messageBody.get("speed"));
                         leaderTruckLocation = DatedTruckLocation.fromString(messageBody.get("truck_location"));
-                        this.logger.info("Adapted speed to leader's. New speed: " + this.getSpeed() + ", Location: " + leaderTruckLocation.toString());
+                        // this.changeSpeed(leaderSpeed);
+                        this.logger.info("Updated leader's speed. New leader speed: " + leaderSpeed + ", Location: " + leaderTruckLocation.toString());
                         break;
                     case "new_direction":
                         leaderTruckLocation = DatedTruckLocation.fromString(messageBody.get("truck_location"));
@@ -79,68 +80,85 @@ public class PrimeFollower extends Truck implements PlatoonTruck {
     
     @Override
     public void run() {
+        logger.info("Prime Follower started operation");
+        truckState = "journey";
+        while (true) {
+            processReceivedMessages();
+            switch (truckState) {
+                case "journey":
+                    Location leaderLocation = leaderTruckLocation.getHeadLocation();
+                    Location truckLocation = this.getLocation();
+
+                    // Adjust direction to match leader's column
+                    int columnDifference = leaderLocation.getColumn() - truckLocation.getColumn();
+                    if (columnDifference > 0){
+                        this.server.setDirection(Direction.NORTH_EAST);
+                    } else if (columnDifference < 0){
+                        this.server.setDirection(Direction.NORTH_WEST);
+                    } else {
+                        this.server.setDirection(Direction.NORTH);
+                    }
         
-            logger.info("Prime Follower started operation");
-            while (true) {
-                processReceivedMessages();
-            
-                // Adjust direction to match leader's column
-                int columnDifference = leaderTruckLocation.getColumn() - this.getLocation().getColumn();
-                if (columnDifference > 0){
-                    this.server.setDirection(Direction.NORTH_EAST);
-                } else if (columnDifference < 0){
-                    this.server.setDirection(Direction.NORTH_WEST);
-                } else {
-                    this.server.setDirection(Direction.NORTH);
+                    int newSpeed = calculateNewSpeed(this.getLocation(), leaderTruckLocation.getHeadLocation(), leaderTruckLocation.getDateTime(), this.getSpeed(), leaderSpeed, optimalDistanceToLeaderTail);
+                    if (this.getSpeed() != newSpeed){
+                        this.changeSpeed(newSpeed);
+                    }
+                    this.logger.info(String.format("Moving %s at speed %s.", this.getDirection(), this.getSpeed()));
+                    // Check if leader is still in communication
+                    // if (ChronoUnit.SECONDS.between(this.server.getTimeOfLastMessage(),
+                    //                LocalDateTime.now()) > LEADER_COMMUNICATION_TIMEOUT) {
+                    //    //leader is no longer in communication
+                    //    assumeLeadership();
+                    // }
+                    break;
+            case "journey_end":
+                if (this.getSpeed() > 0) {
+                    changeSpeed(0);
                 }
-                int newSpeed = calculateNewSpeed(this.getLocation(), leaderTruckLocation.getHeadLocation(), leaderTruckLocation.getDateTime(), this.getSpeed(), leaderSpeed, optimalDistanceToLeaderTail);
-                this.setSpeed(newSpeed);
-                this.logger.info(String.format("Moving %s at speed %s", this.getDirection(), this.getSpeed()));
-                // Check if leader is still in communication
-                // if (ChronoUnit.SECONDS.between(this.server.getTimeOfLastMessage(),
-                //                LocalDateTime.now()) > LEADER_COMMUNICATION_TIMEOUT) {
-                //    //leader is no longer in communication
-                //    assumeLeadership();
-                // }
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+                this.logger.info("Journey has ended. Sleeping.");
+                break;
+            default:
+                    break;
+            }
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
         }
+    }
 
-        private static int calculateNewSpeed(Location truckLocation, Location leaderLocation, LocalDateTime leaderLastKnownLocationTime, int currentSpeed, int leaderSpeed, int optimalDistanceToLeaderTail) {
-            // Adjust position to match optimal distance
-            int newSpeed = currentSpeed;
-            int supposedLeaderRowChange;
-            int nextLeaderRow;
-            // Calculate where leader will be based on last known location and speed.
-            supposedLeaderRowChange = (int) ChronoUnit.SECONDS.between(leaderLastKnownLocationTime, Utils.nowDateTime()) * leaderSpeed;
-            nextLeaderRow = leaderLocation.getRow() -  supposedLeaderRowChange;
-            // Calculate what our speed needs to be to catch up to leader
-            int rowDifference;
-            int nextRow;
-            do {
-                nextRow = truckLocation.getRow() - newSpeed;
-                rowDifference = Math.abs(nextLeaderRow - nextRow - 1);
-                // Distance too much, increase speed
-                if (rowDifference > optimalDistanceToLeaderTail){
-                    if (newSpeed < 4){
-                        newSpeed++;
-                    } else{
-                        break;
-                    }
-                // Distance too small, decrease speed
-                } else if (rowDifference < optimalDistanceToLeaderTail){
-                    if (newSpeed > 0){
-                        newSpeed--;
-                    } else{
-                        break;
-                    }
+    private static int calculateNewSpeed(Location truckLocation, Location leaderLocation, LocalDateTime leaderLastKnownLocationTime, int currentSpeed, int leaderSpeed, int optimalDistanceToLeaderTail) {
+        // Adjust position to match optimal distance
+        int newSpeed = currentSpeed;
+        int supposedLeaderRowChange;
+        int nextLeaderRow;
+        // Calculate where leader will be based on last known location and speed.
+        supposedLeaderRowChange = (int) ChronoUnit.SECONDS.between(leaderLastKnownLocationTime, Utils.nowDateTime()) * leaderSpeed;
+        nextLeaderRow = leaderLocation.getRow() -  supposedLeaderRowChange;
+        // Calculate what our speed needs to be to catch up to leader
+        int rowDifference;
+        int nextRow;
+        do {
+            nextRow = truckLocation.getRow() - newSpeed;
+            rowDifference = Math.abs(nextLeaderRow - nextRow - 1);
+            // Distance too much, increase speed
+            if (rowDifference > optimalDistanceToLeaderTail){
+                if (newSpeed < 4){
+                    newSpeed++;
+                } else{
+                    break;
                 }
-            } while (rowDifference != optimalDistanceToLeaderTail);
-            return newSpeed;
+            // Distance too small, decrease speed
+            } else if (rowDifference < optimalDistanceToLeaderTail){
+                if (newSpeed > 0){
+                    newSpeed--;
+                } else{
+                    break;
+                }
+            }
+        } while (rowDifference != optimalDistanceToLeaderTail);
+        return newSpeed;
     }
 
         private void assumeLeadership() {
