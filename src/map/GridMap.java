@@ -47,7 +47,9 @@ public class GridMap extends JFrame {
         for (int i = 0; i < numRows; i++) {
             for (int j = 0; j < numCols; j++) {
                 String value = grid[i][j];
-
+                if (j == 0){
+                    value = String.valueOf(i);
+                }
                 // Set background color to white
                 g.setColor(Color.WHITE);
                 g.fillRect(j * cellWidth, i * cellHeight, cellWidth, cellHeight);
