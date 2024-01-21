@@ -224,27 +224,58 @@ public class Leader extends Truck implements PlatoonTruck{
                         this.broadcast(platoon.getSocketAddresses(), "ping");
                     }
 
+                    Location currentLocation = this.getLocation();
+
                     // If not aligned with destination, change direction
-                    if (this.getLocation().getColumn() != this.getDestination().getColumn()){
+                    if (currentLocation.getColumn() != this.getDestination().getColumn()){
                         int targetColumn = this.getDestination().getColumn();
-                        int columnDifference = this.getLocation().getColumn() - targetColumn;
-                        System.out.println(this.getLocation().getColumn() + ":" + this.getDestination() + ":" + columnDifference);
+                        int columnDifference = currentLocation.getColumn() - targetColumn;
+                        boolean needToBroadcastChange = false;
                         if (columnDifference > 0 && this.getDirection() != Direction.NORTH_WEST){
                             this.changeDirection(Direction.NORTH_WEST);
-                            this.broadcast(platoon.getSocketAddresses(), "new_direction", "truck_location", this.getDirectionLocation().toString(), "target_column", String.valueOf(targetColumn));
+                            needToBroadcastChange = true;
                         } else if (columnDifference < 0 && this.getDirection() != Direction.NORTH_EAST){
                             this.changeDirection(Direction.NORTH_EAST);
-                            this.broadcast(platoon.getSocketAddresses(), "new_direction", "truck_location", this.getDirectionLocation().toString(), "target_column", String.valueOf(targetColumn));
+                            needToBroadcastChange = true;
+                        }
+                        if (needToBroadcastChange){
+                            this.broadcast(platoon.getSocketAddresses(), "new_direction", "target_column", String.valueOf(targetColumn));
                         }
                         this.logger.info("Changing direction to" + this.getDirection());
                     } else if (this.getDirection() != Direction.NORTH) {
                         this.changeDirection(Direction.NORTH);
                     }
 
-                    if (this.getSpeed() != JOURNEY_SPEED){
-                        this.changeSpeed(JOURNEY_SPEED);
+
+                    // Handle speed
+                    if (currentLocation.getRow() != this.getDestination().getRow()){ // Not at destination yet
+                        int newSpeed = JOURNEY_SPEED; // Go as fast as possible
+                        boolean hasSpeedChanged = newSpeed != this.getSpeed();
+                        // Check to see if we need to slow down to arrive in the desired row
+                        int slowerSpeed = newSpeed;
+                        while (slowerSpeed > 0) {
+                            slowerSpeed--;
+                            if(currentLocation.getRow() - slowerSpeed == this.getDestination().getRow()){
+                                newSpeed = slowerSpeed;
+                                hasSpeedChanged = true;
+                                this.logger.info("Slowing speed at " + currentLocation.getRow() + " to " + newSpeed + " to arrive at destination " + this.getDestination().getRow());
+                                break;
+                            }
+                        }
+                        if (hasSpeedChanged){
+                            this.changeSpeed(newSpeed);
+                        }
+                    } else { // Arrived at destination
+                        this.logger.info("Arrived at destination.");
+                        this.changeSpeed(0);
+                        this.broadcast(platoon.getSocketAddresses(), "journey_end");
+                        truckState = "journey_end";
                     }
+
                     this.logger.info("Moving to destination at speed " + this.getSpeed());
+                    break;
+                case "journey_end":
+                    this.logger.info("Journey ended. Sleeping.");
                     break;
                 default:
                     this.logger.severe("Truck in unknown truckState: " + truckState);
@@ -266,14 +297,11 @@ public class Leader extends Truck implements PlatoonTruck{
 
     @Override
     protected void changeSpeed(int newSpeed) {
+        this.logger.info("Changing speed to " + newSpeed);
         this.server.setSpeed(newSpeed);
         this.broadcast(
             platoon.getSocketAddresses(),
-            "new_speed",
-            "speed",
-            String.valueOf(this.getSpeed()),
-            "truck_location",
-            this.getDirectionLocation().toString()
+            "new_speed"
             );
     }
 
