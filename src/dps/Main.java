@@ -43,7 +43,7 @@ public class Main {
         Logger logger = Logger.getLogger("dps.main");
 
         // Set up map
-        Location destination = new Location(0, 25);
+        Location destination = new Location(2, 25);
         GridMap map = new GridMap(50, 50);
         TruckLocation leaderLocation = new TruckLocation(31, 25, Direction.NORTH);
         TruckLocation[] otherTruckLocations= {
