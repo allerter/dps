@@ -234,7 +234,7 @@ public class Leader extends Truck implements PlatoonTruck{
                     }
 
                     if (this.getSpeed() != JOURNEY_SPEED){
-                        this.increase_speed(JOURNEY_SPEED);
+                        this.changeSpeed(JOURNEY_SPEED);
                     }
                     this.logger.info("Moving to destination at speed " + this.getSpeed());
                     break;
@@ -256,7 +256,8 @@ public class Leader extends Truck implements PlatoonTruck{
         super.changeDirection(newDirection);
     }
 
-    private void increase_speed(int newSpeed) {
+    @Override
+    protected void changeSpeed(int newSpeed) {
         this.server.setSpeed(newSpeed);
         this.broadcast(
             platoon.getSocketAddresses(),
