@@ -34,6 +34,7 @@ class MessageDeserializer extends StdDeserializer<Message> {
         JsonNode node = jp.getCodec().readTree(jp);
         int id = (Integer) (node.get("id")).numberValue();
         String type = node.get("type").asText();
+        int ackId = node.get("ackId").asInt();
         String utc = node.get("utc").asText();
         JsonNode body = node.get("body");
         Entry<String, JsonNode> next;
@@ -44,7 +45,7 @@ class MessageDeserializer extends StdDeserializer<Message> {
             bodyArrayList.add(next.getKey());
             bodyArrayList.add(next.getValue().textValue());
         }
-        return new Message(id, utc, type, bodyArrayList.toArray(new String[bodyArrayList.size()]));
+        return new Message(id, utc, type, ackId, bodyArrayList.toArray(new String[bodyArrayList.size()]));
     }
 }
 
@@ -52,16 +53,18 @@ public class Message {
     int id;
     String type;
     String utc;
+    int ackId;
     Map<String, String> body = new HashMap<String, String>();
 
     final static ObjectMapper mapper = JsonMapper.builder()
                             .addModule(new JavaTimeModule().addDeserializer(Message.class, new MessageDeserializer()))
                             .build();
 
-    public Message(int id, String utc, String type, String... args) {
+    public Message(int id, String utc, String type, int ackId, String... args) {
         this.id = id;
         this.utc = utc;
         this.type = type;
+        this.ackId = ackId;
         
 
         if (args.length % 2 != 0){
@@ -79,6 +82,9 @@ public class Message {
 
     public int getId() {
         return id;
+    }
+    public int getAckId() {
+        return ackId;
     }
     public Map<String, String> getBody() {
         return body;
@@ -101,6 +107,6 @@ public class Message {
 
     @Override
     public String toString() {
-        return String.format("Message(id=%d, utc=%s, body=%s)", this.id, this.utc, this.body.toString());
+        return String.format("Message(id=%d, type=%s, utc=%s, ackId=%d, body=%s)", this.id, this.type, this.utc.toString(), this.ackId, this.body.toString());
     }
 }

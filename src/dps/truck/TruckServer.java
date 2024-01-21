@@ -6,34 +6,48 @@ import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import javax.management.RuntimeErrorException;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
+import dps.CollisionSensor;
 import dps.Message;
 import dps.Utils;
 import dps.platoon.Follower;
 import dps.platoon.Platoon;
 import dps.platoon.PrimeFollower;
+import map.Direction;
+import map.GridMap;
+import map.Location;
 
 public class TruckServer extends Thread {
-    final static int MAX_RETRIES = 3;
-    final static int WAIT_BEFORE_TRY_SECONDS = 2;
-    private Logger logger;
-    private SocketAddress socketAddress;
+    // Truck-related
     private Truck truck;
-    LinkedBlockingQueue<Message> messageQueue = new LinkedBlockingQueue<>();
-    AtomicInteger messageCounter = new AtomicInteger(0);
-    private ArrayList<UnacknowledgedMessage> unacknowledgedSentMessages = new ArrayList<>();
+    private int truckId;
+    private int speed;
+    private TruckLocation location;
+    private Location destination;
+    private CollisionSensor collisionSensor;
 
+    // Network related
+    private SocketAddress socketAddress;
+    private LinkedBlockingQueue<Message> messageQueue = new LinkedBlockingQueue<>();
+    private AtomicInteger messageCounter = new AtomicInteger(0);
+    private LocalDateTime timeOfLastMessage = Utils.nowDateTime();
+    private int[] clockMatrix = {0, 0, 0, 0};
+
+    // General
+    final static int MAX_RETRIES = 3;
+    final static int WAIT_BEFORE_TRY_SECONDS = 10;
+    private Logger logger;
+    private GridMap map;
+    
     class UnacknowledgedMessage {
         LocalDateTime lastTry;
         Message message;
@@ -86,9 +100,60 @@ public class TruckServer extends Thread {
         }
     }
 
-    public TruckServer(SocketAddress socketAddress) throws IOException {
-        this.logger = Logger.getLogger(this.getClass().getSimpleName());
+    public TruckServer(
+        int id,
+        int speed,
+        TruckLocation location,
+        Location destination,
+        SocketAddress socketAddress,
+        GridMap map) throws IOException {
+        this.truckId = id;
+        this.logger = Logger.getLogger("dps." + this.toString());
+        this.speed = speed;
+        this.location = location;
+        this.destination = destination;
         this.socketAddress = socketAddress;
+        this.map = map;
+    }
+
+    public int getTruckId() {
+        return truckId;
+    }
+
+    public int getSpeed() {
+        return speed;
+    }
+
+    public void setSpeed(int speed) {
+        this.speed = speed;
+    }
+
+    public TruckLocation getLocation() {
+        int[] currentLocation = map.findElement("H" + this.truckId);
+        location.setRow(currentLocation[0]);
+        location.setColumn(currentLocation[1]);
+        return location;
+    }
+
+    public Location getHeadLocation(){
+        int[] currentLocation = map.findElement("H" + this.truckId);
+        location.setRow(currentLocation[0]);
+        location.setColumn(currentLocation[1]);
+        return location.getHeadLocation();
+    }
+
+    public void setLocation(Location location) {
+        this.location.setRow(location.getRow());
+        this.location.setColumn(location.getColumn());
+    }
+
+
+    public Location getDestination() {
+        return destination;
+    }
+
+    public void setDestination(Location destination) {
+        this.destination = destination;
     }
 
     public void setTruck(Truck truck) {
@@ -98,6 +163,25 @@ public class TruckServer extends Thread {
 
     public Truck getTruck() {
         return truck;
+    }
+    public Direction getDirection(){
+        return this.location.getDirection();
+    }
+    public void setDirection(Direction direction){
+        this.location.setDirection(direction);
+    }
+
+    public Logger getLogger() {
+        return logger;
+    }
+
+    public LocalDateTime getTimeOfLastMessage() {
+        return timeOfLastMessage;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("Truck %d", this.truckId);
     }
 
     @Override
@@ -113,22 +197,8 @@ public class TruckServer extends Thread {
                         rStringBuilder.append(line);
                     }
                     Message receivedMessage = Message.fromJson(rStringBuilder.toString());
-
-                    // Check to see if received message acknowledges any sent messages
-                    // If it does, remove it from our unacknowledged messages
-                    if (receivedMessage.getBody().get("ack_id") != null){
-                        int ackId = Integer.valueOf(receivedMessage.getBody().get("ack_id"));
-                        for (UnacknowledgedMessage messageInfo : unacknowledgedSentMessages) {
-                            if (messageInfo.getCorrespondingIdsList().contains(ackId)) {
-                                unacknowledgedSentMessages.remove(messageInfo);
-                                this.logger.fine(messageInfo.toString() + "was acknowledged.");
-                                break;
-                            }
-                        }
-                    }
-
+                    this.updateClockMatrix(Utils.stringToClockMatrixArray(receivedMessage.getBody().get("clock_matrix")));
                     this.addMessageToQueue(receivedMessage);
-
                 } catch (JsonProcessingException e) {
                     System.out.println(e.getMessage());
                 } catch (IOException e) {
@@ -137,43 +207,56 @@ public class TruckServer extends Thread {
                     e.printStackTrace();
                 }
 
+                // Manage cases where truck thread has exited
                 if (!this.truck.isAlive()) {
-                    return;
+                    this.logger.finer("Truck isn't alive. Handling...");
+                    if (this.truck.truckState.equals("join_as_follower")){
+                        SocketAddress leaderSocketAddress = SocketAddress.fromString(this.truck.referenceMessage.getBody().get("address"));
+                        int leaderSpeed = Integer.valueOf(this.truck.referenceMessage.getBody().get("speed"));
+                        DatedTruckLocation leaderTruckLocation = DatedTruckLocation.fromString(this.truck.referenceMessage.getBody().get("truck_location"));
+                        int optimalDistanceToLeaderTail = Integer.valueOf(this.truck.referenceMessage.getBody().get("optimal_distance"));
+                        this.joinPlatoonAsFollower(leaderSocketAddress, leaderSpeed, leaderTruckLocation, optimalDistanceToLeaderTail);
+                    }
+                    else if (this.truck.truckState.equals("join_as_prime_follower")){
+                        int leaderSpeed = Integer.valueOf(this.truck.referenceMessage.getBody().get("speed"));
+                        DatedTruckLocation leaderTruckLocation = DatedTruckLocation.fromString(this.truck.referenceMessage.getBody().get("truck_location"));
+                        Platoon platoon = Platoon.fromJson(this.truck.referenceMessage.getBody().get("platoon"));
+                        int optimalDistanceToLeaderTail = Integer.valueOf(this.truck.referenceMessage.getBody().get("optimal_distance"));
+                        this.joinPlatoonAsPrimeFollower(platoon, leaderSpeed, leaderTruckLocation, optimalDistanceToLeaderTail);
+                    } else {
+                        throw new IllegalArgumentException("Truck exited with undefined role: " + this.truck.truckState);
+                    }
                 }
 
-                // Check if messages from before have been acknowledged
-                for (UnacknowledgedMessage messageInfo : unacknowledgedSentMessages) {
-                    Message message = messageInfo.message;
-                    int messageTries = messageInfo.tries;
-                    SocketAddress receiver = messageInfo.receiver;
-                    if (messageTries == MAX_RETRIES) {
-                        this.logger.info("Message has not been acknowledged after 3 tries. Alerting truck.");
-                        this.truck.handleUnresponsiveReceiver(message);
-                    }
-                    if (messageTries < MAX_RETRIES && ChronoUnit.SECONDS.between(messageInfo.lastTry,
-                            LocalDateTime.now()) >= WAIT_BEFORE_TRY_SECONDS) {
-                        // Retry sending message
-                        this.logger.info("Retrying sending " + messageInfo.toString());
-                        message.getBody().put("retry", "true");
-                        int retryMessageId = this.sendMessageTo(
-                                receiver,
-                                message.getType(),
-                                (String[]) message.getBody().entrySet().stream()
-                                        .flatMap(e -> Stream.of(e.getKey(), e.getValue())).collect(Collectors.toList())
-                                        .toArray());
-                        messageInfo.incrementTries();
-                        messageInfo.addCorrespondingId(retryMessageId);
-                    }
-                }
+                Thread.sleep(1000);
+
             }
         } catch (IOException e) {
             System.err
                     .println("Error starting server on port " + this.socketAddress.toString() + ": " + e.getMessage());
+        } catch (InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
         }
 
     }
 
+    private void updateClockMatrix(int[] receivedClockMatrix) {
+        for (int i = 0; i < clockMatrix.length; i++) {
+            if (clockMatrix[i] < receivedClockMatrix[i]){
+                if (i == truckId){
+                    this.logger.severe("Own clock tick behind the assumption of other truck.");
+                } else {
+                    clockMatrix[i] = receivedClockMatrix[i];
+                }
+            }
+        }
+        this.logger.info(Arrays.toString(clockMatrix));
+    }
+
     public int incrementAndGetMessageCounter() {
+        // Increment own clock cycle
+        clockMatrix[truckId]++;
         return messageCounter.incrementAndGet();
     }
 
@@ -190,9 +273,10 @@ public class TruckServer extends Thread {
         this.messageQueue.add(message);
     }
 
-    public int sendMessageTo(SocketAddress socketAddress, String messageType, String... args) {
+    public int sendMessageTo(SocketAddress socketAddress, String messageType, int ackId, String... args) {
+        int messageId = this.incrementAndGetMessageCounter();
         // Add basic info to message body
-        String[] fullArgs = new String[args.length + 6];
+        String[] fullArgs = new String[args.length + 8];
         int counter = 0;
         for (String s : args)
             fullArgs[counter++] = s;
@@ -202,18 +286,17 @@ public class TruckServer extends Thread {
         fullArgs[counter + 3] = this.getSocketAddress().toString();
         fullArgs[counter + 4] = "receiver";
         fullArgs[counter + 5] = socketAddress.toString();
+        fullArgs[counter + 6] = "clock_matrix";
+        fullArgs[counter + 7] = Utils.clockMatrixArrayToString(clockMatrix);
 
-        Message message = new Message(this.incrementAndGetMessageCounter(), Utils.now(), messageType, fullArgs);
+        Message message = new Message(messageId, Utils.now(), messageType, ackId, fullArgs);
         try {
             TruckClient.sendMessage(socketAddress, message);
-            // If it's message's first try, only add it to the list of unacknowledged
-            // messages
-            if (message.getBody().get("retry") != "true") {
-                unacknowledgedSentMessages.add(new UnacknowledgedMessage(message, message.getUtc()));
-            }
+            this.logger.finer("Sent message to " + socketAddress.toString());
         } catch (IOException e) {
             this.logger.severe("Error sending message: " + e.getMessage());
         }
+        timeOfLastMessage = Utils.nowDateTime();
         return message.getId();
     }
 
@@ -225,7 +308,8 @@ public class TruckServer extends Thread {
         return messageQueue;
     }
 
-    public void joinPlatoonAsFollower(SocketAddress leaderAddress) {
+    public void joinPlatoonAsFollower(SocketAddress leaderAddress, int leaderSpeed, DatedTruckLocation leaderTruckLocation, int optimalDistanceToLeaderTail) {
+        this.logger.info("Joining platoon as follower");
         if (!(this.truck instanceof Truck)) {
             throw new RuntimeErrorException(null,
                     "Truck joining platoon isn't of type Truck, but " + this.truck.getClass().getSimpleName());
@@ -233,13 +317,11 @@ public class TruckServer extends Thread {
         this.finishCurrentTruck();
         try {
             this.truck = new Follower(
-                    this.truck.getTruckId(),
-                    this.truck.getDirection(),
-                    this.truck.getSpeed(),
-                    this.truck.getDestination(),
-                    this.truck.getLocation(),
                     this,
-                    leaderAddress);
+                    leaderAddress,
+                    leaderSpeed,
+                    leaderTruckLocation,
+                    optimalDistanceToLeaderTail);
             this.truck.start();
         } catch (IOException e) {
             // TODO Auto-generated catch block
@@ -247,7 +329,8 @@ public class TruckServer extends Thread {
         }
     }
 
-    public void joinPlatoonAsPrimeFollower(SocketAddress leaderAddress, Platoon platoon) {
+    public void joinPlatoonAsPrimeFollower(Platoon platoon, int leaderSpeed, DatedTruckLocation leaderTruckLocation, int optimalDistanceToLeaderTail) {
+        this.logger.info("Joining platoon as prime follower");
         if (!(this.truck instanceof Truck)) {
             throw new RuntimeErrorException(null,
                     "Truck joining platoon isn't of type Truck, but " + this.truck.getClass().getSimpleName());
@@ -255,17 +338,20 @@ public class TruckServer extends Thread {
         this.finishCurrentTruck();
         try {
             this.truck = new PrimeFollower(
-                    this.truck.getTruckId(),
-                    this.truck.getDirection(),
-                    this.truck.getSpeed(),
-                    this.truck.getDestination(),
-                    this.truck.getLocation(),
                     this,
-                    platoon);
+                    platoon,
+                    leaderSpeed,
+                    leaderTruckLocation,
+                    optimalDistanceToLeaderTail
+                    );
             this.truck.start();
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
+    }
+
+    public void incrementSpeed() {
+        this.speed++;
     }
 }
