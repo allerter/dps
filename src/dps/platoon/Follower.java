@@ -63,7 +63,11 @@ public class Follower extends Truck {
                         this.logger.info("Updated leader's direction. New leader direction: " + leaderTruckLocation.getDirection());
                         break;
                     case "leader_change":
-                        throw new IllegalArgumentException("leader_change not implemented.");  
+                        throw new IllegalArgumentException("leader_change not implemented.");
+                    case "journey_end":
+                        this.logger.info("Leader indicated journey has ended.");
+                        truckState = "journey_end";
+                        break;
                     default:
                         this.logger.warning("Unknown message type: " + messageType + ". Ignoring.");
                     
@@ -96,6 +100,12 @@ public class Follower extends Truck {
                     int newSpeed = calculateNewSpeed(this.getLocation(), leaderTruckLocation.getHeadLocation(), leaderTruckLocation.getDateTime(), this.getSpeed(), leaderSpeed, optimalDistanceToLeaderTail);
                     this.setSpeed(newSpeed);
                     this.logger.info(String.format("Moving %s at speed %s.", this.getDirection(), this.getSpeed()));
+                    break;
+                case "journey_end":
+                    if (this.getSpeed() > 0) {
+                        changeSpeed(0);
+                    }
+                    this.logger.info("Journey has ended. Sleeping.");
                     break;
                 default:
                     this.logger.warning("At unknown state:" + truckState);

@@ -60,7 +60,14 @@ public class PrimeFollower extends Truck implements PlatoonTruck {
                         this.logger.info("Updated leader's direction. New leader direction: " + leaderTruckLocation.getDirection());
                         break;
                     case "disconnect":
-                        throw new IllegalArgumentException("leader_change not implemented.");  
+                        throw new IllegalArgumentException("leader_change not implemented.");
+                    case "journey_end":
+                        this.logger.info("Leader indicated journey has ended.");
+                        truckState = "journey_end";
+                        break;
+                    case "ping":
+                        leaderSpeed = Integer.valueOf(messageBody.get("speed"));
+                        leaderTruckLocation = DatedTruckLocation.fromString(messageBody.get("truck_location"));
                     default:
                         this.logger.warning("Unknown message type: " + messageType + ". Ignoring.");
                     
