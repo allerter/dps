@@ -246,20 +246,17 @@ public class TruckServer extends Thread {
             if (clockMatrix[i] < receivedClockMatrix[i]){
                 if (i == truckId){
                     this.logger.severe("Own clock tick behind the assumption of other truck.");
+                } else {
+                    clockMatrix[i] = receivedClockMatrix[i];
                 }
-                clockMatrix[i] = receivedClockMatrix[i];
             }
         }
+        this.logger.info(Arrays.toString(clockMatrix));
     }
 
     public int incrementAndGetMessageCounter() {
         // Increment own clock cycle
-        for (int i = 0; i < clockMatrix.length; i++) {
-            if (i == truckId){
-                clockMatrix[i]++;
-            }
-        }
-
+        clockMatrix[truckId]++;
         return messageCounter.incrementAndGet();
     }
 
