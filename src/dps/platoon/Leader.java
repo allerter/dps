@@ -50,8 +50,16 @@ public class Leader extends Truck implements PlatoonTruck{
     }
 
     public void broadcast(SocketAddress[] truckSocketAddresses, String messageType, String... args){
+        String[] fullArgs = new String[args.length + 4];
+        int counter = 0;
+        for (String s : args)
+            fullArgs[counter++] = s;
+        fullArgs[counter] = "speed";
+        fullArgs[counter + 1] = String.valueOf(this.getSpeed());
+        fullArgs[counter + 2] = "truck_location";
+        fullArgs[counter + 3] = this.getTailDirectionLocation().toString();
         for (SocketAddress truckAddress : truckSocketAddresses) {
-            this.server.sendMessageTo(truckAddress, messageType, -1, args);
+            this.server.sendMessageTo(truckAddress, messageType, -1, fullArgs);
         }
     }
     
