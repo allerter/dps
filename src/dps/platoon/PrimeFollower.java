@@ -5,15 +5,14 @@ import java.io.IOException;
 import dps.GPSLocation;
 import dps.Message;
 import dps.truck.Truck;
-import dps.truck.TruckInMotion;
 import dps.truck.TruckServer;
 
 public class PrimeFollower extends Truck implements PlatoonTruck {
 
     private Platoon platoon; 
 
-    public PrimeFollower(int id,TruckInMotion sharedTruckMotion , String direction, double speed, GPSLocation destination, GPSLocation location, TruckServer server, Platoon platoon) throws IOException {
-        super(id,sharedTruckMotion, direction, speed, destination, location, server);
+    public PrimeFollower(int id, String direction, double speed, GPSLocation destination, GPSLocation location, TruckServer server, Platoon platoon) throws IOException {
+        super(id, direction, speed, destination, location, server);
         this.platoon = platoon;
     }
 

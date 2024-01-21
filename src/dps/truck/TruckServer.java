@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
- 
+
 import javax.management.RuntimeErrorException;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -30,7 +30,6 @@ public class TruckServer extends Thread {
     private Logger logger;
     private SocketAddress socketAddress;
     private Truck truck;
-    private TruckInMotion sharedTruckMotion;
     LinkedBlockingQueue<Message> messageQueue = new LinkedBlockingQueue<>();
     AtomicInteger messageCounter = new AtomicInteger(0);
     private ArrayList<UnacknowledgedMessage> unacknowledgedSentMessages = new ArrayList<>();
@@ -87,10 +86,9 @@ public class TruckServer extends Thread {
         }
     }
 
-     public TruckServer(SocketAddress socketAddress,TruckInMotion sharedTruckMotion) throws IOException {
+    public TruckServer(SocketAddress socketAddress) throws IOException {
         this.logger = Logger.getLogger(this.getClass().getSimpleName());
         this.socketAddress = socketAddress;
-        this.sharedTruckMotion = sharedTruckMotion;
     }
 
     public void setTruck(Truck truck) {
@@ -142,11 +140,6 @@ public class TruckServer extends Thread {
                 if (!this.truck.isAlive()) {
                     return;
                 }
-                
-                if (sharedTruckMotion != null) {
-                    sharedTruckMotion.runSimulation(); // Use sharedTruckMotion methods as needed
-                }
-                
 
                 // Check if messages from before have been acknowledged
                 for (UnacknowledgedMessage messageInfo : unacknowledgedSentMessages) {
@@ -241,7 +234,6 @@ public class TruckServer extends Thread {
         try {
             this.truck = new Follower(
                     this.truck.getTruckId(),
-                    this.truck.getsharedTruckMotion(),
                     this.truck.getDirection(),
                     this.truck.getSpeed(),
                     this.truck.getDestination(),
@@ -264,7 +256,6 @@ public class TruckServer extends Thread {
         try {
             this.truck = new PrimeFollower(
                     this.truck.getTruckId(),
-                    this.truck.getsharedTruckMotion(),
                     this.truck.getDirection(),
                     this.truck.getSpeed(),
                     this.truck.getDestination(),

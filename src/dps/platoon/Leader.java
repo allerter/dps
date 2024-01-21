@@ -10,7 +10,6 @@ import dps.GPSLocation;
 import dps.Message;
 import dps.truck.SocketAddress;
 import dps.truck.Truck;
-import dps.truck.TruckInMotion;
 import dps.truck.TruckServer;
 import dps.Utils;
 
@@ -20,7 +19,6 @@ public class Leader extends Truck implements PlatoonTruck{
     Platoon platoon;
     ArrayList<PotentialFollowerInfo> joinedTrucksList = new ArrayList<>();
     SocketAddress[] otherTrucksSocketAddresses;
-    private TruckInMotion sharedTruckMotion;
 
     class PotentialFollowerInfo {
         public PotentialFollowerInfo(int senderId, GPSLocation fromString, SocketAddress senderAddress) {
@@ -30,16 +28,14 @@ public class Leader extends Truck implements PlatoonTruck{
         SocketAddress address;
     }
 
-     public Leader(int id,TruckInMotion sharedTruckMotion, String direction, double speed, GPSLocation destination, GPSLocation location, TruckServer server, SocketAddress[] otherTrucksSocketAddresses) throws IOException {
-        super(id,sharedTruckMotion, direction, speed, destination, location, server);
+    public Leader(int id, String direction, double speed, GPSLocation destination, GPSLocation location, TruckServer server, SocketAddress[] otherTrucksSocketAddresses) throws IOException {
+        super(id, direction, speed, destination, location, server);
         this.otherTrucksSocketAddresses = otherTrucksSocketAddresses;
-        this.sharedTruckMotion = sharedTruckMotion;
     }
 
-    public Leader(int id,TruckInMotion sharedTruckMotion, String direction, double speed, GPSLocation destination, GPSLocation location, TruckServer server, Platoon platoon) throws IOException {
-        super(id,sharedTruckMotion, direction, speed, destination, location, server);
+    public Leader(int id, String direction, double speed, GPSLocation destination, GPSLocation location, TruckServer server, Platoon platoon) throws IOException {
+        super(id, direction, speed, destination, location, server);
         this.platoon = platoon;
-        this.sharedTruckMotion = sharedTruckMotion;
     }
 
     public void broadcast(SocketAddress[] truckSocketAddresses, String messageType, String... args){
@@ -139,10 +135,6 @@ public class Leader extends Truck implements PlatoonTruck{
                     if (waitForJoin == 5 && joinedTrucksList.size() != 3) {
                         logger.info("Discovery unsuccessful. Trucked joined: " + joinedTrucksList.size());
                         truckState = "roaming";
-
-                        // Simulate communication and interaction with TruckInMotion
-                        sharedTruckMotion.runSimulation();
-
                     // All trucks join. Start the journey
                     } else {
                         this.logger.info("Waiting for trucks to join...");
@@ -153,9 +145,7 @@ public class Leader extends Truck implements PlatoonTruck{
                     if (ChronoUnit.SECONDS.between(timeOfLastMessage, Utils.nowDateTime()) >= 5){
                         this.broadcast(platoon.getSocketAddresses(), "ping");
                     }
-                    this.logger.info("Moving to the destination at a speed " + this.getSpeed());
-                    // Simulate communication and interaction with TruckInMotion
-                    sharedTruckMotion.runSimulation();
+                    this.logger.info("Moving to destination at speed " + this.getSpeed());
                     break;
                     
                     default:
