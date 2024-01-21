@@ -1,14 +1,11 @@
 package dps;
 
 import java.io.IOException;
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Handler;
 import java.util.logging.Level;
-import java.util.logging.LogManager;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 
@@ -105,7 +102,7 @@ public class Main {
         }
         truckCores.add(0, leaderCore);
 
-        LocalDateTime timer = Utils.nowDateTime();
+        // LocalDateTime timer = Utils.nowDateTime();
         while (true) {
             // Create HashMaps and add entries for direction and speed
             List<TruckInfo> directionAndSpeedList = new ArrayList<>();
@@ -114,10 +111,10 @@ public class Main {
                 directionAndSpeedList.add(entry);
             }
 
-            if (timer != null  && ChronoUnit.SECONDS.between(timer, Utils.nowDateTime()) >= 7){
-                destination.setColumn(24);
-                timer = null;
-            }
+            //if (timer != null  && ChronoUnit.SECONDS.between(timer, Utils.nowDateTime()) >= 7){
+            //    destination.setColumn(24);
+            //    timer = null;
+            //}
             try {
                 map.update(directionAndSpeedList.toArray(new TruckInfo[directionAndSpeedList.size()]));
                 logger.finer("map updated");
