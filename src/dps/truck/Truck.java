@@ -2,12 +2,15 @@ package dps.truck;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.logging.Logger;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import dps.Message;
+import dps.Utils;
 import dps.platoon.Platoon;
 import map.Direction;
 import map.Location;
@@ -125,25 +128,24 @@ public class Truck extends Thread {
     }
 
     public void run() {
-        int waitForJoin = 0;
-        int waitForRole = 0;
+        LocalDateTime waitForJoinTimer = Utils.nowDateTime();
+        LocalDateTime waitForRoleTimer = Utils.nowDateTime();
         truckState = "discovery";
         while (true) {
             processReceivedMessages();
             switch (truckState) {
                 case "discovery":
-                    if (waitForJoin > 4){
+                    if (ChronoUnit.SECONDS.between(waitForJoinTimer, Utils.nowDateTime()) > 4){
                         this.logger.info("No leader available to join. Stopping");
                         this.changeSpeed(0);
                         return;
                     }
-                    waitForJoin++;
                     break;
                 case "wait_for_role":
-                    if (waitForRole > 4){
+                    if (ChronoUnit.SECONDS.between(waitForRoleTimer, Utils.nowDateTime()) > 4){
                         this.logger.info("Potential leader never sent role back. Going back to discovery.");
-                        waitForJoin = 0;
-                        waitForRole = 0;
+                        waitForJoinTimer = Utils.nowDateTime();
+                        waitForRoleTimer = Utils.nowDateTime();;
                         truckState = "discovery";
                     }
                     break;
@@ -159,12 +161,6 @@ public class Truck extends Thread {
                     break;
             }
             this.logger.info("Processed messages as " + this.getClass().getSimpleName() + ". Sleeping for 1 sec.");
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
         }
     }
 

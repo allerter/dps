@@ -1,6 +1,7 @@
 package dps.platoon;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Map;
@@ -203,19 +204,19 @@ public class Leader extends Truck implements PlatoonTruck{
             this.broadcast(otherTrucksSocketAddresses, "discovery");
         }
 
-        int waitForJoin = 0;
         truckState = "discovery";
+        LocalDateTime waitTimer= Utils.nowDateTime();
         while (true) {
             processReceivedMessages();
             switch (truckState) {
                 case "discovery":
                     // Wait 5 seconds for other trucks to join
-                    if (waitForJoin == 50 && joinedTrucksList.size() != 3) {
+                    if (ChronoUnit.SECONDS.between(waitTimer, Utils.nowDateTime()) >= 5 && joinedTrucksList.size() != 3) {
                         logger.info("Discovery unsuccessful. Trucked joined: " + joinedTrucksList.size());
                         truckState = "roaming";
                     // All trucks join. Start the journey
                     } else {
-                        this.logger.info("Waiting for trucks to join...");
+                        // this.logger.info("Waiting for trucks to join...");
                     }                    
                     waitForJoin++;
                     break;          
@@ -287,12 +288,6 @@ public class Leader extends Truck implements PlatoonTruck{
                 default:
                     this.logger.severe("Truck in unknown truckState: " + truckState);
                     break;
-            }
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
             }
         }
     }

@@ -232,15 +232,10 @@ public class TruckServer extends Thread {
                     }
                 }
 
-                Thread.sleep(1000);
-
             }
         } catch (IOException e) {
             System.err
                     .println("Error starting server on port " + this.socketAddress.toString() + ": " + e.getMessage());
-        } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
         }
 
     }
