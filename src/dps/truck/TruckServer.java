@@ -40,7 +40,7 @@ public class TruckServer extends Thread {
     private LinkedBlockingQueue<Message> messageQueue = new LinkedBlockingQueue<>();
     private AtomicInteger messageCounter = new AtomicInteger(0);
     private LocalDateTime timeOfLastMessage = Utils.nowDateTime();
-    private int[] clockMatrix = {0, 0, 0, 0};
+    private int[][] clockMatrix = new int[4][4];
 
     // General
     final static int MAX_RETRIES = 3;
@@ -197,7 +197,11 @@ public class TruckServer extends Thread {
                         rStringBuilder.append(line);
                     }
                     Message receivedMessage = Message.fromJson(rStringBuilder.toString());
-                    this.updateClockMatrix(Utils.stringToClockMatrixArray(receivedMessage.getBody().get("clock_matrix")));
+                    this.updateClockMatrix(
+                        Utils.stringToClockMatrixArray(
+                            receivedMessage.getBody().get("clock_matrix")),
+                        Integer.valueOf(receivedMessage.getBody().get("truck_id"))
+                    );
                     this.addMessageToQueue(receivedMessage);
                 } catch (JsonProcessingException e) {
                     System.out.println(e.getMessage());
@@ -228,35 +232,37 @@ public class TruckServer extends Thread {
                     }
                 }
 
-                Thread.sleep(1000);
-
             }
         } catch (IOException e) {
             System.err
                     .println("Error starting server on port " + this.socketAddress.toString() + ": " + e.getMessage());
-        } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
         }
 
     }
 
-    private void updateClockMatrix(int[] receivedClockMatrix) {
-        for (int i = 0; i < clockMatrix.length; i++) {
-            if (clockMatrix[i] < receivedClockMatrix[i]){
-                if (i == truckId){
-                    this.logger.severe("Own clock tick behind the assumption of other truck.");
-                } else {
-                    clockMatrix[i] = receivedClockMatrix[i];
+    private void updateClockMatrix(int[][] receivedClockMatrix, int senderId) {
+        for (int i = 0; i < clockMatrix.length; i++) { // Update truck clock vector
+            for (int j = 0; j < clockMatrix[0].length; j++) { // Update truck cycle of truck vector
+                    if (clockMatrix[i][j] < receivedClockMatrix[i][j]){ // Only update if our value is out of date (smaller)
+                        if (i == truckId && j == truckId){ // Don't update if the value is our own clock (we know ours)
+                            this.logger.warning("Other truck thinks current truck's is out of date.");
+                        } else {
+                            clockMatrix[i][j] = receivedClockMatrix[i][j];
+                        }
+                    }
                 }
             }
+        for (int j = 0; j < clockMatrix[senderId].length; j++) { // Update truck cycle of truck vector
+            if (clockMatrix[this.truckId][j] < receivedClockMatrix[senderId][j]){ // Only update if our value is out of date (smaller)
+                clockMatrix[this.truckId][j] = receivedClockMatrix[senderId][j];
+            }
         }
-        this.logger.info(Arrays.toString(clockMatrix));
+        this.logger.info(Utils.clockMatrixArrayToString(clockMatrix));
     }
 
     public int incrementAndGetMessageCounter() {
         // Increment own clock cycle
-        clockMatrix[truckId]++;
+        clockMatrix[truckId][truckId]++;
         return messageCounter.incrementAndGet();
     }
 
