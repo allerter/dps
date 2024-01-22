@@ -11,6 +11,7 @@ public class GridMap extends JFrame {
 
     private String[][] grid;
     private Logger logger;
+    private TruckInfo[] truckInfos;
 
     public GridMap(int rows, int columns) {
 
@@ -51,7 +52,20 @@ public class GridMap extends JFrame {
                     value = String.valueOf(i);
                 }
                 // Set background color to white
-                g.setColor(Color.WHITE);
+                Color color;
+                // Set color based on the value
+                if (value.startsWith("H")){
+                    if (truckInfos != null){
+                        TruckInfo truck = truckInfos[Character.getNumericValue(value.charAt(1))];
+                        color = truck.color;
+                    } else {
+                        color = Color.GRAY;
+                    }
+ 
+                } else {
+                    color = Color.WHITE;
+                }
+                g.setColor(color);
                 g.fillRect(j * cellWidth, i * cellHeight, cellWidth, cellHeight);
 
                 // Draw black border lines
@@ -116,6 +130,7 @@ public class GridMap extends JFrame {
 
     synchronized public void update(TruckInfo[] truckInfos) {
         boolean needToRepaint = false;
+        this.truckInfos = truckInfos;
         for (TruckInfo truckInfo : truckInfos) {
             int id = truckInfo.getId();
             int speed = truckInfo.getSpeed();
