@@ -1,6 +1,7 @@
 package map;
 import java.awt.Color;
 import java.awt.Graphics;
+import java.util.Arrays;
 import java.util.logging.Logger;
 
 import javax.swing.JFrame;
@@ -37,47 +38,86 @@ public class GridMap extends JFrame {
     @Override
     public void paint(Graphics g) {
         super.paint(g);
-
+    
         int numRows = grid.length;
         int numCols = grid[0].length;
-
+    
         int cellWidth = (getWidth() / numCols);
         int cellHeight = (getHeight() / numRows);
-
-        // Draw white rectangles with black borders
+    
+        // Draw white rectangles with black borders (grid)
         for (int i = 0; i < numRows; i++) {
             for (int j = 0; j < numCols; j++) {
                 String value = grid[i][j];
-                if (j == 0){
-                    value = String.valueOf(i);
-                }
-                // Set background color to white
+    
                 Color color;
                 // Set color based on the value
-                if (value.startsWith("H")){
-                    if (truckInfos != null){
+                if (value.startsWith("H")) {
+                    if (truckInfos != null) {
                         TruckInfo truck = truckInfos[Character.getNumericValue(value.charAt(1))];
                         color = truck.color;
                     } else {
                         color = Color.GRAY;
                     }
- 
                 } else {
                     color = Color.WHITE;
                 }
                 g.setColor(color);
                 g.fillRect(j * cellWidth, i * cellHeight, cellWidth, cellHeight);
-
+    
                 // Draw black border lines
                 g.setColor(Color.BLACK);
                 g.drawRect(j * cellWidth, i * cellHeight, cellWidth, cellHeight);
-
+    
                 // Draw the value in the center
                 g.drawString(String.valueOf(value), j * cellWidth + cellWidth / 2 - 5,
                         i * cellHeight + cellHeight / 2 + 5);
             }
         }
+    
+        // Draw four rectangles at the adjusted position on the right-hand side with borders and information
+        int rectWidth = 150;
+        int rectHeight = 60;
+        int textPadding = 5;
+    
+        int rectX = getWidth() - rectWidth - 20;
+        int rectY = (getHeight() - rectHeight * 4 - 30) / 2;
+    
+        // Loop to draw four rectangles
+        for (int i = 0; i < 4; i++) {
+            // Draw rectangles with borders
+            g.setColor(Color.WHITE);
+            g.fillRect(rectX, rectY + i * (rectHeight + 10), rectWidth, rectHeight);
+            g.setColor(Color.BLACK);
+            g.drawRect(rectX, rectY + i * (rectHeight + 10), rectWidth, rectHeight);
+    
+            int truckId;
+            int speed;
+            String direction;
+            String destination;
+            if (truckInfos != null){
+                TruckInfo truck = truckInfos[i];
+                truckId = truck.id;
+                speed = truck.speed;
+                direction = truck.direction.toString();
+                destination = Arrays.toString(truck.destination);
+            } else {
+                truckId = i;
+                speed = 0;
+                direction = "-";
+                destination = "-";
+            }
+
+            // Display information within each rectangle
+            g.setColor(Color.BLACK);
+            g.drawString("Truck: " + truckId, rectX + textPadding, rectY + i * (rectHeight + 10) + rectHeight / 5);
+            g.drawString("Speed: " + speed, rectX + textPadding, rectY + i * (rectHeight + 10) + 2 * rectHeight / 5);
+            g.drawString("Direction: " + direction, rectX + textPadding, rectY + i * (rectHeight + 10) + 3 * rectHeight / 5);
+            g.drawString("Destination: " + destination, rectX + textPadding, rectY + i * (rectHeight + 10) + 4 * rectHeight / 5);
+        }
     }
+    
+    
 
     // Function to print the grid map
     public void printGrid() {

@@ -1,6 +1,9 @@
 package dps;
 
+import java.awt.Color;
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.ConsoleHandler;
@@ -102,19 +105,33 @@ public class Main {
         }
         truckCores.add(0, leaderCore);
 
-        // LocalDateTime timer = Utils.nowDateTime();
+        LocalDateTime timer = Utils.nowDateTime();
         while (true) {
             // Create HashMaps and add entries for direction and speed
             List<TruckInfo> directionAndSpeedList = new ArrayList<>();
             for (TruckServer truckCore : truckCores) {
-                TruckInfo entry = new TruckInfo(truckCore.getTruckId(), truckCore.getDirection(), truckCore.getSpeed());
+                Color color;
+                Object role = truckCore.getTruck().getClass();
+                if (role instanceof Leader){
+                    if (truckCore.getTruck().getTruckState().equals("journey")){
+                        color = Color.GREEN;
+                    } else {
+                        color = Color.GRAY;
+                    }
+                    
+                } else if (role instanceof Truck){
+                    color = Color.GRAY;
+                } else {
+                    color = Color.GREEN;
+                }
+                TruckInfo entry = new TruckInfo(truckCore.getTruckId(), truckCore.getDirection(), truckCore.getSpeed(), truckCore.getDestination(), color);
                 directionAndSpeedList.add(entry);
             }
 
-            //if (timer != null  && ChronoUnit.SECONDS.between(timer, Utils.nowDateTime()) >= 7){
-            //    destination.setColumn(24);
-            //    timer = null;
-            //}
+            if (timer != null  && ChronoUnit.SECONDS.between(timer, Utils.nowDateTime()) >= 7){
+                destination.setColumn(24);
+                timer = null;
+            }
             try {
                 map.update(directionAndSpeedList.toArray(new TruckInfo[directionAndSpeedList.size()]));
                 logger.finer("map updated");
