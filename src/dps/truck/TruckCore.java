@@ -33,7 +33,7 @@ import map.Location;
 
 public class TruckCore extends Thread {
     // Truck-related
-    private Truck truck;
+    private Truck role;
     private int truckId;
     private int speed;
     private TruckLocation location;
@@ -162,13 +162,13 @@ public class TruckCore extends Thread {
         this.destination = destination;
     }
 
-    public void setTruck(Truck truck) {
-        this.truck = truck;
-        truck.start();
+    public void setRole(Truck role) {
+        this.role = role;
+        role.start();
     }
 
-    public Truck getTruck() {
-        return truck;
+    public Truck getRole() {
+        return role;
     }
     public Direction getDirection(){
         return this.location.getDirection();
@@ -238,7 +238,7 @@ public class TruckCore extends Thread {
                     SocketAddress receiver = messageInfo.receiver;
                     if (messageTries == MAX_RETRIES) {
                         this.logger.info("Message has not been acknowledged after 3 tries. Alerting truck.");
-                        this.truck.handleUnresponsiveReceiver(message);
+                        this.role.handleUnresponsiveReceiver(message);
                     }
                     if (messageTries < MAX_RETRIES && ChronoUnit.SECONDS.between(messageInfo.lastTry,
                             LocalDateTime.now()) >= WAIT_BEFORE_TRY_SECONDS) {
@@ -258,23 +258,23 @@ public class TruckCore extends Thread {
                 }
 
                 // Manage cases where truck thread has exited
-                if (!this.truck.isAlive()) {
+                if (!this.role.isAlive()) {
                     this.logger.finer("Truck isn't alive. Handling...");
-                    if (this.truck.truckState.equals("join_as_follower")){
-                        SocketAddress leaderSocketAddress = SocketAddress.fromString(this.truck.referenceMessage.getBody().get("address"));
-                        int leaderSpeed = Integer.valueOf(this.truck.referenceMessage.getBody().get("speed"));
-                        DatedTruckLocation leaderTruckLocation = DatedTruckLocation.fromString(this.truck.referenceMessage.getBody().get("truck_location"));
-                        int optimalDistanceToLeaderTail = Integer.valueOf(this.truck.referenceMessage.getBody().get("optimal_distance"));
+                    if (this.role.truckState.equals("join_as_follower")){
+                        SocketAddress leaderSocketAddress = SocketAddress.fromString(this.role.referenceMessage.getBody().get("address"));
+                        int leaderSpeed = Integer.valueOf(this.role.referenceMessage.getBody().get("speed"));
+                        DatedTruckLocation leaderTruckLocation = DatedTruckLocation.fromString(this.role.referenceMessage.getBody().get("truck_location"));
+                        int optimalDistanceToLeaderTail = Integer.valueOf(this.role.referenceMessage.getBody().get("optimal_distance"));
                         this.joinPlatoonAsFollower(leaderSocketAddress, leaderSpeed, leaderTruckLocation, optimalDistanceToLeaderTail);
                     }
-                    else if (this.truck.truckState.equals("join_as_prime_follower")){
-                        int leaderSpeed = Integer.valueOf(this.truck.referenceMessage.getBody().get("speed"));
-                        DatedTruckLocation leaderTruckLocation = DatedTruckLocation.fromString(this.truck.referenceMessage.getBody().get("truck_location"));
-                        Platoon platoon = Platoon.fromJson(this.truck.referenceMessage.getBody().get("platoon"));
-                        int optimalDistanceToLeaderTail = Integer.valueOf(this.truck.referenceMessage.getBody().get("optimal_distance"));
+                    else if (this.role.truckState.equals("join_as_prime_follower")){
+                        int leaderSpeed = Integer.valueOf(this.role.referenceMessage.getBody().get("speed"));
+                        DatedTruckLocation leaderTruckLocation = DatedTruckLocation.fromString(this.role.referenceMessage.getBody().get("truck_location"));
+                        Platoon platoon = Platoon.fromJson(this.role.referenceMessage.getBody().get("platoon"));
+                        int optimalDistanceToLeaderTail = Integer.valueOf(this.role.referenceMessage.getBody().get("optimal_distance"));
                         this.joinPlatoonAsPrimeFollower(platoon, leaderSpeed, leaderTruckLocation, optimalDistanceToLeaderTail);
                     } else {
-                        throw new IllegalArgumentException("Truck exited with undefined role: " + this.truck.truckState);
+                        throw new IllegalArgumentException("Truck exited with undefined role: " + this.role.truckState);
                     }
                 }
 
@@ -307,7 +307,7 @@ public class TruckCore extends Thread {
 
     public void finishCurrentTruck() {
         try {
-            this.truck.join();
+            this.role.join();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -326,7 +326,7 @@ public class TruckCore extends Thread {
         for (String s : args)
             fullArgs[counter++] = s;
         fullArgs[counter] = "truck_id";
-        fullArgs[counter + 1] = String.valueOf(this.truck.getTruckId());
+        fullArgs[counter + 1] = String.valueOf(this.getTruckId());
         fullArgs[counter + 2] = "address";
         fullArgs[counter + 3] = this.getSocketAddress().toString();
         fullArgs[counter + 4] = "receiver";
@@ -362,17 +362,17 @@ public class TruckCore extends Thread {
         this.logger.info("Joining platoon as follower");
         if (!(this.truck instanceof Truck)) {
             throw new RuntimeErrorException(null,
-                    "Truck joining platoon isn't of type Truck, but " + this.truck.getClass().getSimpleName());
+                    "Truck joining platoon isn't of type Truck, but " + this.role.getClass().getSimpleName());
         }
         this.finishCurrentTruck();
         try {
-            this.truck = new Follower(
+            this.role = new Follower(
                     this,
                     leaderAddress,
                     leaderSpeed,
                     leaderTruckLocation,
                     optimalDistanceToLeaderTail);
-            this.truck.start();
+            this.role.start();
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -383,18 +383,18 @@ public class TruckCore extends Thread {
         this.logger.info("Joining platoon as prime follower");
         if (!(this.truck instanceof Truck)) {
             throw new RuntimeErrorException(null,
-                    "Truck joining platoon isn't of type Truck, but " + this.truck.getClass().getSimpleName());
+                    "Truck joining platoon isn't of type Truck, but " + this.role.getClass().getSimpleName());
         }
         this.finishCurrentTruck();
         try {
-            this.truck = new PrimeFollower(
+            this.role = new PrimeFollower(
                     this,
                     platoon,
                     leaderSpeed,
                     leaderTruckLocation,
                     optimalDistanceToLeaderTail
                     );
-            this.truck.start();
+            this.role.start();
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
