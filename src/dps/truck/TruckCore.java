@@ -31,7 +31,7 @@ import map.Direction;
 import map.GridMap;
 import map.Location;
 
-public class TruckServer extends Thread {
+public class TruckCore extends Thread {
     // Truck-related
     private Truck truck;
     private int truckId;
@@ -46,7 +46,7 @@ public class TruckServer extends Thread {
     private AtomicInteger messageCounter = new AtomicInteger(0);
     private List<UnacknowledgedMessage> unacknowledgedSentMessages = Collections.synchronizedList(new ArrayList<UnacknowledgedMessage>());
     private LocalDateTime timeOfLastMessage = Utils.nowDateTime();
-    private int[][] clockMatrix = new int[4][4];
+    private int[] clockMatrix = new int[4];
 
     // General
     final static int MAX_RETRIES = 3;
@@ -106,7 +106,7 @@ public class TruckServer extends Thread {
         }
     }
 
-    public TruckServer(
+    public TruckCore(
         int id,
         int speed,
         TruckLocation location,
@@ -219,8 +219,7 @@ public class TruckServer extends Thread {
 
                     this.updateClockMatrix(
                         Utils.stringToClockMatrixArray(
-                            receivedMessage.getBody().get("clock_matrix")),
-                        Integer.valueOf(receivedMessage.getBody().get("truck_id"))
+                            receivedMessage.getBody().get("clock_matrix"))
                     );
                     this.addMessageToQueue(receivedMessage);
 
@@ -287,29 +286,22 @@ public class TruckServer extends Thread {
 
     }
 
-    private void updateClockMatrix(int[][] receivedClockMatrix, int senderId) {
-        for (int i = 0; i < clockMatrix.length; i++) { // Update truck clock vector
-            for (int j = 0; j < clockMatrix[0].length; j++) { // Update truck cycle of truck vector
-                    if (clockMatrix[i][j] < receivedClockMatrix[i][j]){ // Only update if our value is out of date (smaller)
-                        if (i == truckId && j == truckId){ // Don't update if the value is our own clock (we know ours)
-                            this.logger.warning("Other truck thinks current truck's is out of date.");
-                        } else {
-                            clockMatrix[i][j] = receivedClockMatrix[i][j];
-                        }
-                    }
+    private void updateClockMatrix(int[] receivedClockMatrix) {
+        for (int i = 0; i < clockMatrix.length; i++) {
+            if (clockMatrix[i] < receivedClockMatrix[i]){
+                if (i == truckId){
+                    this.logger.severe("Own clock tick behind the assumption of other truck.");
+                } else {
+                    clockMatrix[i] = receivedClockMatrix[i];
                 }
             }
-        for (int j = 0; j < clockMatrix[senderId].length; j++) { // Update truck cycle of truck vector
-            if (clockMatrix[this.truckId][j] < receivedClockMatrix[senderId][j]){ // Only update if our value is out of date (smaller)
-                clockMatrix[this.truckId][j] = receivedClockMatrix[senderId][j];
-            }
         }
-        this.logger.info(Utils.clockMatrixArrayToString(clockMatrix));
+        this.logger.info(Arrays.toString(clockMatrix));
     }
 
     public int incrementAndGetMessageCounter() {
         // Increment own clock cycle
-        clockMatrix[truckId][truckId]++;
+        clockMatrix[truckId]++;
         return messageCounter.incrementAndGet();
     }
 

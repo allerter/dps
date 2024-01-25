@@ -2,7 +2,6 @@ package dps;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
 
 public class Utils {
     static final DateTimeFormatter dtf = DateTimeFormatter.ofPattern("uuuu/MM/dd HH:mm:ss");
@@ -56,25 +55,34 @@ public class Utils {
         return Math.sqrt(distance);
     }
 
-    public static int[][] stringToClockMatrixArray(String s) {
-        String[] rowStrings = s.split(";");
-        int[][] newArray = new int[rowStrings.length][rowStrings.length];
-        for (int i = 0; i < newArray.length; i++) {
-            String[] elements = rowStrings[i].replaceAll("[\\[\\]]", "").split(", ");
-            for (int j = 0; j < newArray.length; j++) {
-                newArray[i][j] = Integer.parseInt(elements[j]);
-            }
+    public static int[] stringToClockMatrixArray(String s) {
+        // Split the string using the colon delimiter
+        String[] parts = s.split(":");
+        
+        // Initialize an array to store integers
+        int[] intArray = new int[parts.length];
+        
+        // Parse each substring into an integer and store in the array
+        for (int i = 0; i < parts.length; i++) {
+            intArray[i] = Integer.parseInt(parts[i]);
         }
-        return newArray;
+        return intArray;
     }
 
-    public static String clockMatrixArrayToString(int[][] a){
-        StringBuilder sb = new StringBuilder();
-        for (int[] row : a) {
-            sb.append(Arrays.toString(row)).append(";");
+    public static String clockMatrixArrayToString(int[] a){
+        StringBuilder result = new StringBuilder();
+        for (int i = 0; i < a.length; i++) {
+            // Append the integer to the StringBuilder
+            result.append(a[i]);
+            
+            // Append a colon (':') if it's not the last element
+            if (i < a.length - 1) {
+                result.append(":");
+            }
         }
-        // Remove the trailing ":"
-        return sb.substring(0, sb.length() - 1);
+
+        // Convert the StringBuilder to a String
+        return result.toString();
     }
 
     
