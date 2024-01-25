@@ -18,7 +18,7 @@ public class GridMap extends JFrame {
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setTitle("grid Grid Plotter");
-        setSize(400, 400);
+        setSize(900, 562);
         setLocationRelativeTo(null);
         setBackground(Color.WHITE); // Set background color to white
         setVisible(true);
@@ -95,28 +95,79 @@ public class GridMap extends JFrame {
             int speed;
             String direction;
             String destination;
+            int[] clockMatrix = new int[4];
             if (truckInfos != null){
                 TruckInfo truck = truckInfos[i];
                 truckId = truck.id;
                 speed = truck.speed;
                 direction = truck.direction.toString();
                 destination = Arrays.toString(truck.destination);
+                clockMatrix = truck.clockMatrix;
             } else {
                 truckId = i;
                 speed = 0;
                 direction = "-";
                 destination = "-";
             }
-
+    
             // Display information within each rectangle
             g.setColor(Color.BLACK);
             g.drawString("Truck: " + truckId, rectX + textPadding, rectY + i * (rectHeight + 10) + rectHeight / 5);
             g.drawString("Speed: " + speed, rectX + textPadding, rectY + i * (rectHeight + 10) + 2 * rectHeight / 5);
             g.drawString("Direction: " + direction, rectX + textPadding, rectY + i * (rectHeight + 10) + 3 * rectHeight / 5);
-            g.drawString("Destination: " + destination, rectX + textPadding, rectY + i * (rectHeight + 10) + 4 * rectHeight / 5);
+            g.drawString("CM: " + Arrays.toString(clockMatrix), rectX + textPadding, rectY + i * (rectHeight + 10) + 4 * rectHeight / 5);
         }
     }
     
+    
+    
+    public void updateFacts(TruckInfo[] truckInfos){
+        this.truckInfos = truckInfos;
+        // Draw four rectangles at the adjusted position on the right-hand side with borders and information
+        int rectWidth = 150;
+        int rectHeight = 60;
+        int textPadding = 5;
+    
+        int rectX = getWidth() - rectWidth - 20;
+        int rectY = (getHeight() - rectHeight * 4 - 30) / 2;
+        Graphics g = getGraphics();
+
+        
+        // Loop to draw four rectangles
+        for (int i = 0; i < 4; i++) {
+            // Draw rectangles with borders
+            g.setColor(Color.WHITE);
+            g.fillRect(rectX, rectY + i * (rectHeight + 10), rectWidth, rectHeight);
+            g.setColor(Color.BLACK);
+            g.drawRect(rectX, rectY + i * (rectHeight + 10), rectWidth, rectHeight);
+
+            int truckId;
+            int speed;
+            String direction;
+            String destination;
+            int[] clockMatrix = new int[4];
+            if (truckInfos != null){
+                TruckInfo truck = truckInfos[i];
+                truckId = truck.id;
+                speed = truck.speed;
+                direction = truck.direction.toString();
+                destination = Arrays.toString(truck.destination);
+                clockMatrix = truck.clockMatrix;
+            } else {
+                truckId = i;
+                speed = 0;
+                direction = "-";
+                destination = "-";
+            }
+    
+            // Display information within each rectangle
+            g.setColor(Color.BLACK);
+            g.drawString("Truck: " + truckId, rectX + textPadding, rectY + i * (rectHeight + 10) + rectHeight / 5);
+            g.drawString("Speed: " + speed, rectX + textPadding, rectY + i * (rectHeight + 10) + 2 * rectHeight / 5);
+            g.drawString("Direction: " + direction, rectX + textPadding, rectY + i * (rectHeight + 10) + 3 * rectHeight / 5);
+            g.drawString("CM: " + Arrays.toString(clockMatrix), rectX + textPadding, rectY + i * (rectHeight + 10) + 4 * rectHeight / 5);
+        }
+    }
     
 
     // Function to print the grid map
