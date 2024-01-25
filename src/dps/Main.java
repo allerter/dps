@@ -72,13 +72,13 @@ public class Main {
         }
 
         try {
-            truckCores.get(0).setTruck(new Truck(truckCores.get(0)));
-            truckCores.get(1).setTruck(new Truck(truckCores.get(1)));
-            truckCores.get(2).setTruck(new Truck(truckCores.get(2)));
+            truckCores.get(0).setRole(new Truck(truckCores.get(0)));
+            truckCores.get(1).setRole(new Truck(truckCores.get(1)));
+            truckCores.get(2).setRole(new Truck(truckCores.get(2)));
 
             for (TruckCore truckCore : truckCores) {
                 truckCore.start();
-                logger.info("Deployed Truck " + truckCore.getTruck().getTruckId());
+                logger.info("Deployed Truck " + truckCore.getRole().getTruckId());
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -92,7 +92,7 @@ public class Main {
                 trucksAddresses[i] = truckCores.get(i).getSocketAddress();
             }
             leaderCore = new TruckCore(0, 0, leaderLocation, destination, new SocketAddress("127.0.0.1", 5000), map);
-            leaderCore.setTruck(new Leader(
+            leaderCore.setRole(new Leader(
                     leaderCore,
                     trucksAddresses));
             leaderCore.start();
@@ -111,9 +111,9 @@ public class Main {
             List<TruckInfo> directionAndSpeedList = new ArrayList<>();
             for (TruckCore truckCore : truckCores) {
                 Color color;
-                Object role = truckCore.getTruck().getClass();
+                Object role = truckCore.getRole().getClass();
                 if (role instanceof Leader){
-                    if (truckCore.getTruck().getTruckState().equals("journey")){
+                    if (truckCore.getRole().getTruckState().equals("journey")){
                         color = Color.GREEN;
                     } else {
                         color = Color.GRAY;

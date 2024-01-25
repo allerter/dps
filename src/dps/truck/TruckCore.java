@@ -190,6 +190,10 @@ public class TruckCore extends Thread {
         return String.format("Truck %d", this.truckId);
     }
 
+    public int[] getClockMatrix(){
+        return this.clockMatrix;
+    }
+
     @Override
     public void run() {
         try (ServerSocket serverSocket = new ServerSocket(this.socketAddress.getPort())) {
@@ -360,7 +364,7 @@ public class TruckCore extends Thread {
 
     public void joinPlatoonAsFollower(SocketAddress leaderAddress, int leaderSpeed, DatedTruckLocation leaderTruckLocation, int optimalDistanceToLeaderTail) {
         this.logger.info("Joining platoon as follower");
-        if (!(this.truck instanceof Truck)) {
+        if (!(this.role instanceof Truck)) {
             throw new RuntimeErrorException(null,
                     "Truck joining platoon isn't of type Truck, but " + this.role.getClass().getSimpleName());
         }
@@ -381,7 +385,7 @@ public class TruckCore extends Thread {
 
     public void joinPlatoonAsPrimeFollower(Platoon platoon, int leaderSpeed, DatedTruckLocation leaderTruckLocation, int optimalDistanceToLeaderTail) {
         this.logger.info("Joining platoon as prime follower");
-        if (!(this.truck instanceof Truck)) {
+        if (!(this.role instanceof Truck)) {
             throw new RuntimeErrorException(null,
                     "Truck joining platoon isn't of type Truck, but " + this.role.getClass().getSimpleName());
         }
