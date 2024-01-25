@@ -16,7 +16,7 @@ import dps.platoon.Leader;
 import dps.truck.SocketAddress;
 import dps.truck.Truck;
 import dps.truck.TruckLocation;
-import dps.truck.TruckServer;
+import dps.truck.TruckCore;
 import map.GridMap;
 import map.Location;
 import map.TruckInfo;
@@ -60,12 +60,12 @@ public class Main {
 
         // initialize platoon:
         // 1 Leader, 1 Prime Follower, 2 Followers
-        ArrayList<TruckServer> truckCores = new ArrayList<>();
+        ArrayList<TruckCore> truckCores = new ArrayList<>();
         try {
 
-            truckCores.add(new TruckServer(1, 0, otherTruckLocations[0], destination, new SocketAddress("127.0.0.1", 5001), map));
-            truckCores.add(new TruckServer(2, 0, otherTruckLocations[1], destination, new SocketAddress("127.0.0.1", 5002), map));
-            truckCores.add(new TruckServer(3, 0, otherTruckLocations[2], destination, new SocketAddress("127.0.0.1", 5003), map));
+            truckCores.add(new TruckCore(1, 0, otherTruckLocations[0], destination, new SocketAddress("127.0.0.1", 5001), map));
+            truckCores.add(new TruckCore(2, 0, otherTruckLocations[1], destination, new SocketAddress("127.0.0.1", 5002), map));
+            truckCores.add(new TruckCore(3, 0, otherTruckLocations[2], destination, new SocketAddress("127.0.0.1", 5003), map));
         } catch (IOException e) {
             e.printStackTrace();
             return;
@@ -76,7 +76,7 @@ public class Main {
             truckCores.get(1).setTruck(new Truck(truckCores.get(1)));
             truckCores.get(2).setTruck(new Truck(truckCores.get(2)));
 
-            for (TruckServer truckCore : truckCores) {
+            for (TruckCore truckCore : truckCores) {
                 truckCore.start();
                 logger.info("Deployed Truck " + truckCore.getTruck().getTruckId());
             }
@@ -85,13 +85,13 @@ public class Main {
             return;
         }
 
-        TruckServer leaderCore;
+        TruckCore leaderCore;
         try {
             SocketAddress[] trucksAddresses = new SocketAddress[truckCores.size()];
             for (int i = 0; i < truckCores.size(); i++) {
                 trucksAddresses[i] = truckCores.get(i).getSocketAddress();
             }
-            leaderCore = new TruckServer(0, 0, leaderLocation, destination, new SocketAddress("127.0.0.1", 5000), map);
+            leaderCore = new TruckCore(0, 0, leaderLocation, destination, new SocketAddress("127.0.0.1", 5000), map);
             leaderCore.setTruck(new Leader(
                     leaderCore,
                     trucksAddresses));
@@ -109,7 +109,7 @@ public class Main {
         while (true) {
             // Create HashMaps and add entries for direction and speed
             List<TruckInfo> directionAndSpeedList = new ArrayList<>();
-            for (TruckServer truckCore : truckCores) {
+            for (TruckCore truckCore : truckCores) {
                 Color color;
                 Object role = truckCore.getTruck().getClass();
                 if (role instanceof Leader){
@@ -124,12 +124,17 @@ public class Main {
                 } else {
                     color = Color.GREEN;
                 }
-                TruckInfo entry = new TruckInfo(truckCore.getTruckId(), truckCore.getDirection(), truckCore.getSpeed(), truckCore.getDestination(), color);
+                TruckInfo entry = new TruckInfo(truckCore.getTruckId(), truckCore.getDirection(), truckCore.getSpeed(), truckCore.getDestination(), color, truckCore.getClockMatrix());
                 directionAndSpeedList.add(entry);
             }
 
-            if (timer != null  && ChronoUnit.SECONDS.between(timer, Utils.nowDateTime()) >= 7){
-                destination.setColumn(24);
+            if (timer != null  && ChronoUnit.SECONDS.between(timer, Utils.nowDateTime()) >= 3){
+                // destination.setColumn(24);
+                Truck role = leaderCore.getRole();
+                if (role instanceof Leader){
+                    ((Leader)role).JOURNEY_SPEED = 4;
+                    role.changeSpeed(4);
+                }
                 timer = null;
             }
             try {
