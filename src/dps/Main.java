@@ -47,8 +47,8 @@ public class Main {
         GridMap map = new GridMap(50, 50);
         TruckLocation leaderLocation = new TruckLocation(31, 25, Direction.NORTH);
         TruckLocation[] otherTruckLocations= {
-            new TruckLocation(36, 25, Direction.NORTH),
-            new TruckLocation(41, 25, Direction.NORTH),
+            new TruckLocation(38, 20, Direction.NORTH),
+            new TruckLocation(39, 27, Direction.NORTH),
             new TruckLocation(46, 25, Direction.NORTH)
         };
         // Add trucks to map
