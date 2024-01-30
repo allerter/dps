@@ -18,18 +18,18 @@ import map.Location;
 public class Truck extends Thread {
     protected String truckState;
     protected Logger logger;
-    protected TruckServer server;
+    protected TruckCore core;
     protected Message referenceMessage;
 
-    public Truck(TruckServer server) throws IOException {
-        this.logger = server.getLogger();
+    public Truck(TruckCore core) throws IOException {
+        this.logger = core.getLogger();
         this.truckState = "roaming";
-        this.server = server;
+        this.core = core;
 
     }
 
     public int getTruckId() {
-        return this.server.getTruckId();
+        return this.core.getTruckId();
     }
 
     public String getTruckState() {
@@ -41,44 +41,44 @@ public class Truck extends Thread {
     }
 
     public Direction getDirection() {
-        return this.server.getDirection();
+        return this.core.getDirection();
     }
 
     public void setDirection(Direction direction) {
-        this.server.setDirection(direction);;
+        this.core.setDirection(direction);;
     }
 
     public Location getDestination() {
-        return server.getDestination();
+        return core.getDestination();
     }
 
     public void setDestination(Location destination) {
-        this.server.setDestination(destination);;
+        this.core.setDestination(destination);;
     }
 
     public Location getLocation() {
-        return server.getHeadLocation();
+        return core.getHeadLocation();
     }
 
     public TruckLocation getDirectionLocation() {
-        return this.server.getLocation();
+        return this.core.getLocation();
     }
 
     public void setLocation(Location location) {
-        this.server.setLocation(location);
+        this.core.setLocation(location);
     }
 
     public int getSpeed() {
-        return server.getSpeed();
+        return core.getSpeed();
     }
 
     public void setSpeed(int speed) {
-        server.setSpeed(speed);
+        core.setSpeed(speed);
     }
 
     public void processReceivedMessages() {
         while (true) {
-            Message message = this.server.getMessageQueue().poll();
+            Message message = this.core.getMessageQueue().poll();
             if (message == null) {
                 return;
             } else {
@@ -124,7 +124,7 @@ public class Truck extends Thread {
     };
 
     protected void sendMessageTo(SocketAddress leaderAddress, String messageType, int ackId, String... messageBody) {
-        this.server.sendMessageTo(leaderAddress, messageType, ackId, messageBody);
+        this.core.sendMessageTo(leaderAddress, messageType, ackId, messageBody);
     }
 
     public void run() {
@@ -160,7 +160,7 @@ public class Truck extends Thread {
                 default:
                     break;
             }
-            this.logger.info("Processed messages as " + this.getClass().getSimpleName() + ". Sleeping for 1 sec.");
+            // this.logger.info("Processed messages as " + this.getClass().getSimpleName() + ". Sleeping for 1 sec.");
         }
     }
 
@@ -169,7 +169,7 @@ public class Truck extends Thread {
         this.setDirection(newDirection);
     }
 
-    protected void changeSpeed(int newSpeed) {
+    public void changeSpeed(int newSpeed) {
         this.logger.info("Changing speed from " + this.getSpeed() + " to " + newSpeed);
         this.setSpeed(newSpeed);
     }

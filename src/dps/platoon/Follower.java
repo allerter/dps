@@ -11,7 +11,7 @@ import dps.truck.DatedTruckLocation;
 import dps.truck.SocketAddress;
 import dps.truck.Truck;
 import dps.truck.TruckLocation;
-import dps.truck.TruckServer;
+import dps.truck.TruckCore;
 import map.Direction;
 import map.Location;
 
@@ -22,8 +22,8 @@ public class Follower extends Truck {
     DatedTruckLocation leaderTruckLocation;
     int optimalDistanceToLeaderTail;
 
-    public Follower(TruckServer server, SocketAddress leaderAddress, int leaderSpeed, DatedTruckLocation leaderTruckLocation, int optimalDistanceToLeaderTail) throws IOException {
-        super(server);
+    public Follower(TruckCore core, SocketAddress leaderAddress, int leaderSpeed, DatedTruckLocation leaderTruckLocation, int optimalDistanceToLeaderTail) throws IOException {
+        super(core);
         this.leaderAddress = leaderAddress;
         this.leaderSpeed = leaderSpeed;
         this.leaderTruckLocation = leaderTruckLocation;
@@ -41,7 +41,7 @@ public class Follower extends Truck {
     @Override
     public void processReceivedMessages() {
         while (true) {
-            Message message = this.server.getMessageQueue().poll();
+            Message message = this.core.getMessageQueue().poll();
             if (message == null) {
                 return;
             } else {
@@ -90,11 +90,11 @@ public class Follower extends Truck {
                     // Adjust direction to match leader's column
                     int columnDifference = leaderLocation.getColumn() - truckLocation.getColumn();
                     if (columnDifference > 0){
-                        this.server.setDirection(Direction.NORTH_EAST);
+                        this.core.setDirection(Direction.NORTH_EAST);
                     } else if (columnDifference < 0){
-                        this.server.setDirection(Direction.NORTH_WEST);
+                        this.core.setDirection(Direction.NORTH_WEST);
                     } else {
-                        this.server.setDirection(Direction.NORTH);
+                        this.core.setDirection(Direction.NORTH);
                     }
         
                     int newSpeed = calculateNewSpeed(this.getLocation(), leaderTruckLocation.getHeadLocation(), leaderTruckLocation.getDateTime(), this.getSpeed(), leaderSpeed, optimalDistanceToLeaderTail);

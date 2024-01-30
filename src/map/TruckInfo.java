@@ -8,12 +8,14 @@ public class TruckInfo{
     int speed;
     Color color;
     int[] destination;
-    public TruckInfo(int id, Direction direction, int speed, Location destination, Color color) {
+    int[] clockMatrix;
+    public TruckInfo(int id, Direction direction, int speed, Location destination, Color color, int[] clockMatrix) {
         this.id = id;
         this.direction = direction;
         this.speed = speed;
         this.color = color;
         this.destination = new int[]{destination.getRow(), destination.getColumn()};
+        this.clockMatrix = clockMatrix;
     }
     public int getId() {
         return id;
@@ -29,5 +31,8 @@ public class TruckInfo{
     }
     public int[] getDestination() {
         return destination;
+    }
+    public int[] getClockMatrix() {
+        return clockMatrix;
     }
 }

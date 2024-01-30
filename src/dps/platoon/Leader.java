@@ -12,7 +12,7 @@ import dps.Message;
 import dps.truck.SocketAddress;
 import dps.truck.Truck;
 import dps.truck.TruckLocation;
-import dps.truck.TruckServer;
+import dps.truck.TruckCore;
 import map.Direction;
 import map.GridMap;
 import map.Location;
@@ -22,7 +22,7 @@ public class Leader extends Truck implements PlatoonTruck{
 
     int DISTANCE_BETWEEN_TRUCKS = 2;
     int WAIT_BEFORE_PING = 10;
-    int JOURNEY_SPEED = 2;
+    public int JOURNEY_SPEED = 2;
     Platoon platoon;
     ArrayList<PotentialFollowerInfo> joinedTrucksList = new ArrayList<>();
     SocketAddress[] otherTrucksSocketAddresses;
@@ -40,13 +40,13 @@ public class Leader extends Truck implements PlatoonTruck{
         }
     }
 
-    public Leader(TruckServer server, SocketAddress[] otherTrucksSocketAddresses) throws IOException {
-        super(server);
+    public Leader(TruckCore core, SocketAddress[] otherTrucksSocketAddresses) throws IOException {
+        super(core);
         this.otherTrucksSocketAddresses = otherTrucksSocketAddresses;
     }
 
-    public Leader(TruckServer server, Platoon platoon) throws IOException {
-        super(server);
+    public Leader(TruckCore core, Platoon platoon) throws IOException {
+        super(core);
         this.platoon = platoon;
     }
 
@@ -61,7 +61,7 @@ public class Leader extends Truck implements PlatoonTruck{
         fullArgs[counter + 3] = this.getTailDirectionLocation().toString();
         for (SocketAddress truckAddress : truckSocketAddresses) {
             if (truckAddress != this.getSocketAddress()){
-                this.server.sendMessageTo(truckAddress, messageType, -1, fullArgs);
+                this.core.sendMessageTo(truckAddress, messageType, -1, fullArgs);
             }
         }
     }
@@ -90,7 +90,7 @@ public class Leader extends Truck implements PlatoonTruck{
     @Override
     public void processReceivedMessages() {
         while (true) {
-            Message message = this.server.getMessageQueue().poll();
+            Message message = this.core.getMessageQueue().poll();
             if (message == null) {
                 return;
             } else {
@@ -192,7 +192,7 @@ public class Leader extends Truck implements PlatoonTruck{
     }
 
     private SocketAddress getSocketAddress() {
-        return server.getSocketAddress();
+        return core.getSocketAddress();
     }
 
     @Override
@@ -217,12 +217,11 @@ public class Leader extends Truck implements PlatoonTruck{
                     // All trucks join. Start the journey
                     } else {
                         // this.logger.info("Waiting for trucks to join...");
-                    }                    
-                    waitForJoin++;
+                    }
                     break;          
                 case "journey":
                     // Ping platoon trucks if it has been 5 seconds since last message exchange    
-                    if (ChronoUnit.SECONDS.between(this.server.getTimeOfLastMessage(), Utils.nowDateTime()) >= WAIT_BEFORE_PING){
+                    if (ChronoUnit.SECONDS.between(this.core.getTimeOfLastMessage(), Utils.nowDateTime()) >= WAIT_BEFORE_PING){
                         this.logger.info("Pinging followers");
                         this.broadcast(platoon.getSocketAddresses(), "ping");
                     }
@@ -298,9 +297,9 @@ public class Leader extends Truck implements PlatoonTruck{
     }
 
     @Override
-    protected void changeSpeed(int newSpeed) {
+    public void changeSpeed(int newSpeed) {
         this.logger.info("Changing speed to " + newSpeed);
-        this.server.setSpeed(newSpeed);
+        this.core.setSpeed(newSpeed);
         this.broadcast(
             platoon.getSocketAddresses(),
             "new_speed"
