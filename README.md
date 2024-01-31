@@ -12,7 +12,7 @@ To run the simulation, follow one of these two methods:
 
 ## Using VS Code
 
- Open the project using VS Code and run it. VS Code will automatically recognize the used libraries and run the simulation.
+ Open the project using VS Code. Open the `implementation/src/dps/Main.java` and run it. VS Code will automatically recognize the used libraries and run the simulation.
 
 ## Using the compiled JAR
 You must have JRE 11  (or a newer version) installed. Open a terminal and run the JAR file:
