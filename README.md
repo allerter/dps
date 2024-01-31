@@ -3,9 +3,9 @@
 Team name: Distributed Platoon
 
 Team members:
-    - Hazhir Amiri
-    - Anguiga Hermann
-    - Mohammad Rizwan
+- Hazhir Amiri
+- Anguiga Hermann
+- Mohammad Rizwan
 
 # Instructions
 To run the simulation, follow one of these two methods:
